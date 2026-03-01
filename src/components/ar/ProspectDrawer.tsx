@@ -46,7 +46,7 @@ import { toast } from "sonner";
 const STAGES = [
   "contacted", "internal_review", "offer_sent", "negotiating", "signed", "passed",
 ];
-const PRIORITIES = ["low", "medium", "high"];
+const PRIORITIES = ["high", "medium", "low"];
 const ENGAGEMENT_TYPES = [
   "call", "email", "dm", "meeting", "show", "intro",
 ];
@@ -55,8 +55,14 @@ const DEAL_TYPES = ["distribution", "frontline_record", "partnership", "publishi
 
 const stageLabel = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+const priorityLabel = (p: string) => {
+  if (p === "high") return "Active";
+  if (p === "medium") return "Stalling";
+  return "Unclear";
+};
+
 const priorityDot = (p: string) => {
-  if (p === "high") return "bg-destructive";
+  if (p === "high") return "bg-emerald-500";
   if (p === "medium") return "bg-amber-500";
   return "bg-muted-foreground/40";
 };
@@ -235,7 +241,7 @@ export function ProspectDrawer({ prospectId, onClose }: ProspectDrawerProps) {
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    {PRIORITIES.map((p) => <SelectItem key={p} value={p} className="capitalize">{stageLabel(p)}</SelectItem>)}
+                    {PRIORITIES.map((p) => <SelectItem key={p} value={p}>{priorityLabel(p)}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 {spotifyId && (

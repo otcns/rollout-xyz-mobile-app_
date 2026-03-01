@@ -270,13 +270,13 @@ export function NewProspectDialog({ open, onOpenChange, teamId }: NewProspectDia
                   </Select>
                 </div>
                 <div>
-                  <Label>Priority</Label>
+                  <Label>Status</Label>
                   <Select value={form.priority} onValueChange={(v) => set("priority", v)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="high">Active</SelectItem>
+                      <SelectItem value="medium">Stalling</SelectItem>
+                      <SelectItem value="low">Unclear</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

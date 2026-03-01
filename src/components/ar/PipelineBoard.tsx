@@ -33,8 +33,14 @@ const stageDot = (s: string) => {
   return "bg-muted-foreground";
 };
 
+const priorityLabel = (p: string) => {
+  if (p === "high") return "Active";
+  if (p === "medium") return "Stalling";
+  return "Unclear";
+};
+
 const priorityDot = (p: string) => {
-  if (p === "high") return "bg-destructive";
+  if (p === "high") return "bg-emerald-500";
   if (p === "medium") return "bg-amber-500";
   return "bg-muted-foreground/40";
 };

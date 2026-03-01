@@ -16,9 +16,15 @@ import {
 const stageLabel = (s: string) =>
   s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+const priorityLabel = (p: string) => {
+  if (p === "high") return "Active";
+  if (p === "medium") return "Stalling";
+  return "Unclear";
+};
+
 const priorityBadge = (p: string) => {
-  if (p === "high") return "destructive" as const;
-  if (p === "medium") return "secondary" as const;
+  if (p === "high") return "secondary" as const;
+  if (p === "medium") return "outline" as const;
   return "outline" as const;
 };
 
@@ -47,7 +53,7 @@ export function ProspectTable({ prospects, onSelect, onDelete }: ProspectTablePr
               <th className="text-left px-4 py-2 font-medium text-muted-foreground hidden sm:table-cell">Genre</th>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground hidden md:table-cell">City</th>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground">Stage</th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground hidden sm:table-cell">Priority</th>
+              <th className="text-left px-4 py-2 font-medium text-muted-foreground hidden sm:table-cell">Status</th>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground hidden lg:table-cell">Follow Up</th>
               {onDelete && <th className="w-10" />}
             </tr>
@@ -66,7 +72,7 @@ export function ProspectTable({ prospects, onSelect, onDelete }: ProspectTablePr
                   <Badge variant="secondary" className="text-xs">{stageLabel(p.stage)}</Badge>
                 </td>
                 <td className="px-4 py-3 hidden sm:table-cell">
-                  <Badge variant={priorityBadge(p.priority)} className="text-xs capitalize">{p.priority}</Badge>
+                  <Badge variant={priorityBadge(p.priority)} className="text-xs">{priorityLabel(p.priority)}</Badge>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
                   {p.next_follow_up ? new Date(p.next_follow_up).toLocaleDateString() : "—"}
