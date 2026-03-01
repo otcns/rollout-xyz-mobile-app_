@@ -1422,30 +1422,39 @@ export type Database = {
       teams: {
         Row: {
           annual_budget: number | null
+          artist_count: string | null
           avatar_url: string | null
           company_type: string | null
           created_at: string
           created_by: string | null
           id: string
+          monthly_revenue: string | null
           name: string
+          team_size: string | null
         }
         Insert: {
           annual_budget?: number | null
+          artist_count?: string | null
           avatar_url?: string | null
           company_type?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
+          monthly_revenue?: string | null
           name: string
+          team_size?: string | null
         }
         Update: {
           annual_budget?: number | null
+          artist_count?: string | null
           avatar_url?: string | null
           company_type?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
+          monthly_revenue?: string | null
           name?: string
+          team_size?: string | null
         }
         Relationships: []
       }
