@@ -103,34 +103,35 @@ export default function Agenda() {
     enabled: !!artistId,
   });
 
-  // Team members
-  const { data: memberships = [] } = useQuery({
-    queryKey: ["agenda-memberships", teamId],
+  // Artist permissions — members with access to selected artist
+  const { data: artistPermissions = [] } = useQuery({
+    queryKey: ["agenda-artist-permissions", artistId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("team_memberships")
-        .select("user_id")
-        .eq("team_id", teamId!);
+        .from("artist_permissions")
+        .select("user_id, permission")
+        .eq("artist_id", artistId!)
+        .neq("permission", "no_access");
       if (error) throw error;
       return data;
     },
-    enabled: !!teamId,
+    enabled: !!artistId,
   });
 
-  const memberUserIds = useMemo(() => memberships.map((m) => m.user_id), [memberships]);
+  const artistMemberIds = useMemo(() => artistPermissions.map((p) => p.user_id), [artistPermissions]);
 
   // Profiles for those members
   const { data: profiles = [] } = useQuery({
-    queryKey: ["agenda-profiles", memberUserIds],
+    queryKey: ["agenda-profiles", artistMemberIds],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("id, full_name")
-        .in("id", memberUserIds);
+        .in("id", artistMemberIds);
       if (error) throw error;
       return data;
     },
-    enabled: memberUserIds.length > 0,
+    enabled: artistMemberIds.length > 0,
   });
 
   const profileMap = useMemo(() => {
@@ -141,38 +142,36 @@ export default function Agenda() {
     return map;
   }, [profiles]);
 
-  // All team members (for the meeting attendee picker)
   const scopedMemberIds = useMemo(() => {
-    return Object.keys(profileMap);
-  }, [profileMap]);
+    return artistMemberIds.filter((id) => profileMap[id]);
+  }, [artistMemberIds, profileMap]);
 
   // Reset assignees when artist changes
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { setSelectedAssignees([]); }, [artistId]);
 
-  // Empty array = all members selected
+  // null = all members selected, empty array = none selected
   const allSelected = selectedAssignees.length === 0;
+  const noneSelected = selectedAssignees.length > 0 && selectedAssignees[0] === "__none__";
 
   const toggleAssignee = useCallback((uid: string) => {
     setSelectedAssignees((prev) => {
-      if (prev.length === 0) {
-        // Currently "all" — deselect this one by selecting everyone else
-        return scopedMemberIds.filter((id) => id !== uid);
+      // If none or all mode, start fresh with just this one
+      if (prev.length === 0 || (prev.length === 1 && prev[0] === "__none__")) {
+        return [uid];
       }
       if (prev.includes(uid)) {
         const next = prev.filter((id) => id !== uid);
-        // Don't allow empty (that means "all"); keep at least the last one or go to all
-        if (next.length === 0) return [];
+        if (next.length === 0) return ["__none__"];
         return next;
       }
       const next = [...prev, uid];
-      // If all members now selected, reset to "all" mode
       return next.length === scopedMemberIds.length ? [] : next;
     });
   }, [scopedMemberIds]);
 
-  const selectAll = useCallback(() => {
-    setSelectedAssignees([]);
+  const toggleSelectAll = useCallback(() => {
+    setSelectedAssignees((prev) => (prev.length === 0 ? ["__none__"] : []));
   }, []);
 
   // Calculations
@@ -183,7 +182,9 @@ export default function Agenda() {
   // Filter tasks by assignees
   const filteredTasks = allSelected
     ? tasks
-    : tasks.filter((t) => t.assigned_to && selectedAssignees.includes(t.assigned_to));
+    : noneSelected
+      ? []
+      : tasks.filter((t) => t.assigned_to && selectedAssignees.includes(t.assigned_to));
 
   const openTaskCount = filteredTasks.length;
   const campaignCount = initiatives.length;
@@ -296,24 +297,26 @@ export default function Agenda() {
               <span className="truncate text-sm">
                 {allSelected
                   ? "All Members"
-                  : selectedAssignees.length === 1
-                    ? profileMap[selectedAssignees[0]] || "1 Member"
-                    : `${selectedAssignees.length} Members`}
+                  : noneSelected
+                    ? "No Members"
+                    : selectedAssignees.length === 1
+                      ? profileMap[selectedAssignees[0]] || "1 Member"
+                      : `${selectedAssignees.length} Members`}
               </span>
               <ChevronDown className="h-3.5 w-3.5 ml-auto text-muted-foreground" />
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-[200px] p-1">
             <button
-              onClick={selectAll}
+              onClick={toggleSelectAll}
               className="flex items-center gap-2 w-full rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
             >
-              <Checkbox checked={allSelected} onCheckedChange={selectAll} />
+              <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
               <span>Select All</span>
             </button>
             <div className="h-px bg-border my-1" />
             {scopedMemberIds.map((uid) => {
-              const checked = allSelected || selectedAssignees.includes(uid);
+              const checked = allSelected || (!noneSelected && selectedAssignees.includes(uid));
               return (
                 <button
                   key={uid}
