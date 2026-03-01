@@ -453,6 +453,8 @@ export type Database = {
       }
       artists: {
         Row: {
+          agenda_is_public: boolean
+          agenda_public_token: string | null
           avatar_url: string | null
           banner_url: string | null
           created_at: string
@@ -473,6 +475,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agenda_is_public?: boolean
+          agenda_public_token?: string | null
           avatar_url?: string | null
           banner_url?: string | null
           created_at?: string
@@ -493,6 +497,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agenda_is_public?: boolean
+          agenda_public_token?: string | null
           avatar_url?: string | null
           banner_url?: string | null
           created_at?: string

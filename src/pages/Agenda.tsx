@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { useSelectedTeam } from "@/contexts/TeamContext";
@@ -9,13 +9,15 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarDays, DollarSign, ChevronDown, ChevronUp, User, Copy, Check } from "lucide-react";
+import { CalendarDays, DollarSign, ChevronDown, ChevronUp, User, Copy, Check, Share2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { format, startOfWeek, endOfWeek, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function Agenda() {
   const { selectedTeamId: teamId } = useSelectedTeam();
+  const queryClient = useQueryClient();
 
   // Artists for picker
   const { data: artists = [] } = useQuery({
@@ -23,7 +25,7 @@ export default function Agenda() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("artists")
-        .select("id, name, avatar_url")
+        .select("id, name, avatar_url, agenda_is_public, agenda_public_token")
         .eq("team_id", teamId!);
       if (error) throw error;
       return data;
@@ -101,21 +103,6 @@ export default function Agenda() {
     enabled: !!artistId,
   });
 
-  // Artist-specific permissions (members with access)
-  const { data: artistPerms = [] } = useQuery({
-    queryKey: ["agenda-artist-perms", artistId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("artist_permissions")
-        .select("user_id")
-        .eq("artist_id", artistId!)
-        .in("permission", ["view_access", "full_access"]);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!artistId,
-  });
-
   // Profiles for assignees
   const { data: profiles = [] } = useQuery({
     queryKey: ["agenda-profiles", teamId],
@@ -138,13 +125,10 @@ export default function Agenda() {
     return map;
   }, [profiles]);
 
-  // Scoped member list: if artist has permissions configured, use those; else all team members
+  // All team members (for the meeting attendee picker)
   const scopedMemberIds = useMemo(() => {
-    const allIds = Object.keys(profileMap);
-    if (artistPerms.length === 0) return allIds;
-    const permIds = artistPerms.map((p) => p.user_id);
-    return allIds.filter((id) => permIds.includes(id));
-  }, [profileMap, artistPerms]);
+    return Object.keys(profileMap);
+  }, [profileMap]);
 
   // Reset assignees when artist changes
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -328,9 +312,55 @@ export default function Agenda() {
           </PopoverContent>
         </Popover>
         {artist && (
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={exportAgenda}>
-            <Copy className="h-3.5 w-3.5" /> Export View
-          </Button>
+          <>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={exportAgenda}>
+              <Copy className="h-3.5 w-3.5" /> Export View
+            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Share2 className="h-3.5 w-3.5" /> Share
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[300px] p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Public Link</span>
+                    <Switch
+                      checked={(artist as any).agenda_is_public ?? false}
+                      onCheckedChange={async (checked) => {
+                        await supabase.from("artists").update({ agenda_is_public: checked } as any).eq("id", artist.id);
+                        queryClient.invalidateQueries({ queryKey: ["agenda-artists", teamId] });
+                        toast.success(checked ? "Agenda sharing enabled" : "Agenda sharing disabled");
+                      }}
+                    />
+                  </div>
+                  {(artist as any).agenda_is_public && (artist as any).agenda_public_token && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">Anyone with this link can view this agenda.</p>
+                      <div className="flex gap-2">
+                        <input
+                          readOnly
+                          value={`${window.location.origin}/shared/agenda/${(artist as any).agenda_public_token}`}
+                          className="flex-1 text-xs bg-muted rounded px-2 py-1.5 border border-border truncate"
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/shared/agenda/${(artist as any).agenda_public_token}`);
+                            toast.success("Link copied!");
+                          }}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </>
         )}
       </div>
 

@@ -18,6 +18,7 @@ import Overview from "./pages/Overview";
 import Agenda from "./pages/Agenda";
 import MyWork from "./pages/MyWork";
 import PublicTimeline from "./pages/PublicTimeline";
+import PublicAgenda from "./pages/PublicAgenda";
 import JoinTeam from "./pages/JoinTeam";
 import Staff from "./pages/Staff";
 import ARList from "./pages/ARList";
@@ -60,6 +61,7 @@ function AppRoutes() {
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/shared/member/:token" element={<PublicMemberInfo />} />
       <Route path="/shared/timeline/:token" element={<PublicTimeline />} />
+      <Route path="/shared/agenda/:token" element={<PublicAgenda />} />
       <Route path="/join/:token" element={<JoinTeam />} />
       <Route path="/" element={<Navigate to="/roster" replace />} />
       <Route path="*" element={<NotFound />} />
