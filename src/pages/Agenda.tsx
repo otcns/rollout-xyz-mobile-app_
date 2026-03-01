@@ -103,13 +103,13 @@ export default function Agenda() {
     enabled: !!artistId,
   });
 
-  // Profiles for assignees
-  const { data: profiles = [] } = useQuery({
-    queryKey: ["agenda-profiles", teamId],
+  // Team members
+  const { data: memberships = [] } = useQuery({
+    queryKey: ["agenda-memberships", teamId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("team_memberships")
-        .select("user_id, profiles(full_name)")
+        .select("user_id")
         .eq("team_id", teamId!);
       if (error) throw error;
       return data;
@@ -117,10 +117,26 @@ export default function Agenda() {
     enabled: !!teamId,
   });
 
+  const memberUserIds = useMemo(() => memberships.map((m) => m.user_id), [memberships]);
+
+  // Profiles for those members
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["agenda-profiles", memberUserIds],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", memberUserIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: memberUserIds.length > 0,
+  });
+
   const profileMap = useMemo(() => {
     const map: Record<string, string> = {};
     profiles.forEach((p: any) => {
-      map[p.user_id] = (p.profiles as any)?.full_name || "?";
+      map[p.id] = p.full_name || "?";
     });
     return map;
   }, [profiles]);
