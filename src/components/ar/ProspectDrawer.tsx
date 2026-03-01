@@ -213,7 +213,21 @@ export function ProspectDrawer({ prospectId, onClose }: ProspectDrawerProps) {
                   <AvatarFallback className="text-lg font-bold">{prospect.artist_name?.[0]}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-xl font-bold text-foreground truncate">{prospect.artist_name}</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-foreground truncate">{prospect.artist_name}</h2>
+                    {spotifyId && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                        onClick={syncSpotifyData}
+                        disabled={syncingSpotify}
+                        title="Refresh from Spotify"
+                      >
+                        <RefreshCw className={cn("h-3.5 w-3.5", syncingSpotify && "animate-spin")} />
+                      </Button>
+                    )}
+                  </div>
                   {prospect.monthly_listeners && prospect.monthly_listeners > 0 ? (
                     <span className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                       <Headphones className="h-3 w-3" />
@@ -244,18 +258,6 @@ export function ProspectDrawer({ prospectId, onClose }: ProspectDrawerProps) {
                     {PRIORITIES.map((p) => <SelectItem key={p} value={p}>{priorityLabel(p)}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                {spotifyId && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 shrink-0 rounded-lg"
-                    onClick={syncSpotifyData}
-                    disabled={syncingSpotify}
-                    title="Refresh from Spotify"
-                  >
-                    <RefreshCw className={cn("h-3.5 w-3.5", syncingSpotify && "animate-spin")} />
-                  </Button>
-                )}
               </div>
             </div>
 
@@ -317,9 +319,9 @@ export function ProspectDrawer({ prospectId, onClose }: ProspectDrawerProps) {
                           )}
                         </div>
                       </div>
-                      <Field label="Instagram" value={prospect.instagram ?? ""} placeholder="@handle" onSave={(v) => handleFieldUpdate("instagram", v || null)} />
-                      <Field label="TikTok" value={prospect.tiktok ?? ""} placeholder="@handle" onSave={(v) => handleFieldUpdate("tiktok", v || null)} />
-                      <Field label="YouTube" value={prospect.youtube ?? ""} placeholder="Channel URL" onSave={(v) => handleFieldUpdate("youtube", v || null)} />
+                      <SocialField label="Instagram" value={prospect.instagram ?? ""} placeholder="@handle" onSave={(v) => handleFieldUpdate("instagram", v || null)} urlPrefix="https://instagram.com/" />
+                      <SocialField label="TikTok" value={prospect.tiktok ?? ""} placeholder="@handle" onSave={(v) => handleFieldUpdate("tiktok", v || null)} urlPrefix="https://tiktok.com/@" />
+                      <SocialField label="YouTube" value={prospect.youtube ?? ""} placeholder="Channel URL" onSave={(v) => handleFieldUpdate("youtube", v || null)} urlPrefix="https://youtube.com/" />
                     </div>
                   </section>
 
@@ -434,6 +436,34 @@ function Field({
       <span className="text-muted-foreground text-xs font-medium">{label}</span>
       <div className="mt-1">
         <InlineField value={value} placeholder={placeholder} onSave={onSave} />
+      </div>
+    </div>
+  );
+}
+
+/* ── Social field with clickable link ── */
+function SocialField({
+  label, value, placeholder, onSave, urlPrefix,
+}: {
+  label: string; value: string; placeholder: string; onSave: (v: string) => void; urlPrefix: string;
+}) {
+  const handle = value.replace(/^@/, "");
+  const url = value.startsWith("http") ? value : handle ? `${urlPrefix}${handle}` : null;
+  return (
+    <div>
+      <span className="text-muted-foreground text-xs font-medium">{label}</span>
+      <div className="flex items-center gap-1.5 mt-1">
+        <InlineField value={value} placeholder={placeholder} onSave={onSave} />
+        {value && url && (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 p-1 rounded hover:bg-accent transition-colors"
+          >
+            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+          </a>
+        )}
       </div>
     </div>
   );
