@@ -1538,6 +1538,7 @@ export type Database = {
         | "frontline_record"
         | "partnership"
         | "publishing"
+        | "management"
       engagement_type:
         | "call"
         | "email"
@@ -1700,6 +1701,7 @@ export const Constants = {
         "frontline_record",
         "partnership",
         "publishing",
+        "management",
       ],
       engagement_type: [
         "call",
