@@ -27,11 +27,29 @@ import { ARPipelineWidget } from "@/components/overview/ARPipelineWidget";
 import { StreamingTrendsWidget } from "@/components/overview/StreamingTrendsWidget";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CompanyBudgetSection } from "@/components/overview/CompanyBudgetSection";
+import { BuildYourCompany } from "@/components/overview/BuildYourCompany";
 import type { StaffMember } from "@/components/overview/StaffMetricsSection";
 
 
 export default function Overview() {
   const { selectedTeamId: teamId } = useSelectedTeam();
+
+  // Fetch team to check company_type
+  const { data: team, refetch: refetchTeam } = useQuery({
+    queryKey: ["team-detail", teamId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("teams")
+        .select("*")
+        .eq("id", teamId!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!teamId,
+  });
+
+  const companyType = (team as any)?.company_type as string | null;
 
   const { data: profile } = useQuery({
     queryKey: ["my-profile"],
@@ -400,6 +418,11 @@ export default function Overview() {
 
   return (
     <AppLayout title="Company">
+      {/* Gate: must set company type first */}
+      {!companyType && teamId ? (
+        <BuildYourCompany teamId={teamId} onComplete={() => refetchTeam()} />
+      ) : (
+      <>
       {/* Welcome */}
       <div className="mb-8 flex items-start justify-between">
         <div>
@@ -562,6 +585,8 @@ export default function Overview() {
             </div>
           )}
         </>
+      )}
+      </>
       )}
     </AppLayout>
   );
