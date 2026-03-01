@@ -49,7 +49,7 @@ export function NotesPanel() {
   }, [notes, selectedId, isLoading]);
 
   const handleCreate = async () => {
-    const result = await createNote.mutateAsync("Untitled");
+    const result = await createNote.mutateAsync("");
     setSelectedId(result.id);
   };
 
@@ -125,6 +125,7 @@ export function NotesPanel() {
           note={selectedNote}
           isOwner={isOwner}
           onTitleBlur={handleTitleBlur}
+          onTitleChange={(v) => selectedId && updateNote.mutate({ id: selectedId, title: v })}
           onContentChange={handleContentChange}
           shareCount={shareCount}
           autoFocus
@@ -219,6 +220,7 @@ export function NotesPanel() {
                 note={selectedNote}
                 isOwner={isOwner}
                 onTitleBlur={handleTitleBlur}
+                onTitleChange={(v) => selectedId && updateNote.mutate({ id: selectedId, title: v })}
                 onContentChange={handleContentChange}
                 shareCount={shareCount}
                 autoFocus={false}
@@ -253,7 +255,7 @@ function NoteListItem({ note, isSelected, onClick, isShared }: {
       )}
     >
       <div className="flex items-start justify-between gap-1">
-        <p className="text-sm font-semibold text-foreground truncate">{note.title || "Untitled"}</p>
+        <p className="text-sm font-semibold text-foreground truncate">{note.title || "New Note"}</p>
         {isShared && <Share2 className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />}
       </div>
       <div className="flex items-center gap-1.5 mt-0.5">
@@ -266,16 +268,19 @@ function NoteListItem({ note, isSelected, onClick, isShared }: {
 
 /* ── Note Editor with Rich Text ────────────────────── */
 
-function NoteEditor({ note, isOwner, onTitleBlur, onContentChange, shareCount, autoFocus }: {
+function NoteEditor({ note, isOwner, onTitleBlur, onTitleChange, onContentChange, shareCount, autoFocus }: {
   note: any;
   isOwner: boolean;
   onTitleBlur: (v: string) => void;
+  onTitleChange: (v: string) => void;
   onContentChange: (v: string) => void;
   shareCount: number;
   autoFocus: boolean;
 }) {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const titleRef = useRef<HTMLInputElement>(null);
+  const lastAutoTitleRef = useRef<string>(note.title || "");
+  const autoTitle = !note.title || note.title.trim() === "";
 
   const editor = useEditor({
     extensions: [
@@ -304,6 +309,16 @@ function NoteEditor({ note, isOwner, onTitleBlur, onContentChange, shareCount, a
       const clean = html === "<p></p>" ? "" : html;
       clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => onContentChange(clean), 600);
+
+      // Auto-title from first 3 words of plain text
+      if (autoTitle) {
+        const text = e.getText().trim();
+        const words = text.split(/\s+/).filter(Boolean).slice(0, 3).join(" ");
+        if (words && words !== lastAutoTitleRef.current) {
+          lastAutoTitleRef.current = words;
+          onTitleChange(words);
+        }
+      }
     },
   }, [note.id]);
 
@@ -314,7 +329,7 @@ function NoteEditor({ note, isOwner, onTitleBlur, onContentChange, shareCount, a
 
   // Auto-focus editor on new notes
   useEffect(() => {
-    if (editor && autoFocus && note.title === "Untitled" && !note.content) {
+    if (editor && autoFocus && !note.content) {
       setTimeout(() => editor.commands.focus("end"), 50);
     }
   }, [editor, note.id]);
