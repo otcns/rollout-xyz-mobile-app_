@@ -6,11 +6,13 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format, isToday, isTomorrow, isPast, isYesterday } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, Music2, Wallet } from "lucide-react";
 import { cn, parseDateFromText } from "@/lib/utils";
 import { PullToRefresh } from "@/components/PullToRefresh";
-import { useCallback, useState, useRef, useEffect } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { toast } from "sonner";
+import { ItemEditor } from "@/components/ui/ItemEditor";
+import { useArtists } from "@/hooks/useArtists";
 
 export default function MyWork() {
   const { user } = useAuth();
@@ -18,7 +20,25 @@ export default function MyWork() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [newTitle, setNewTitle] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
+  const [expenseAmount, setExpenseAmount] = useState<number | null>(null);
+  const [budgetId, setBudgetId] = useState<string | null>(null);
+
+  const { data: artists = [] } = useArtists(teamId);
+
+  // Fetch budgets for the selected artist
+  const { data: budgets = [] } = useQuery({
+    queryKey: ["budgets", selectedArtistId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("budgets")
+        .select("*")
+        .eq("artist_id", selectedArtistId!);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedArtistId,
+  });
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["my-work", user?.id],
@@ -47,19 +67,43 @@ export default function MyWork() {
   });
 
   const createTask = useMutation({
-    mutationFn: async ({ title, due_date }: { title: string; due_date?: string }) => {
+    mutationFn: async (params: {
+      title: string;
+      due_date?: string;
+      artist_id?: string;
+      expense_amount?: number;
+      budget_id?: string;
+    }) => {
       if (!teamId || !user?.id) throw new Error("Missing team or user");
       const { error } = await supabase.from("tasks").insert({
-        title,
+        title: params.title,
         team_id: teamId,
         assigned_to: user.id,
-        ...(due_date ? { due_date } : {}),
+        ...(params.due_date ? { due_date: params.due_date } : {}),
+        ...(params.artist_id ? { artist_id: params.artist_id } : {}),
+        ...(params.expense_amount ? { expense_amount: params.expense_amount } : {}),
       });
       if (error) throw error;
+
+      // If there's an expense and a budget, also create a transaction
+      if (params.expense_amount && params.artist_id && params.budget_id) {
+        await supabase.from("transactions").insert({
+          artist_id: params.artist_id,
+          budget_id: params.budget_id,
+          amount: params.expense_amount,
+          description: params.title,
+          type: "expense",
+          status: "pending",
+          transaction_date: params.due_date || new Date().toISOString().split("T")[0],
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-work"] });
       setNewTitle("");
+      setSelectedArtistId(null);
+      setExpenseAmount(null);
+      setBudgetId(null);
       toast.success("Task added");
     },
     onError: (err: any) => toast.error(err.message),
@@ -72,8 +116,54 @@ export default function MyWork() {
     createTask.mutate({
       title: parsed.title,
       due_date: parsed.date ? format(parsed.date, "yyyy-MM-dd") : undefined,
+      artist_id: selectedArtistId || undefined,
+      expense_amount: expenseAmount || undefined,
+      budget_id: budgetId || undefined,
     });
   };
+
+  // Build triggers for ItemEditor
+  const triggers = useMemo(() => {
+    const artistTrigger = {
+      char: "@",
+      items: artists.map((a: any) => ({
+        id: a.id,
+        label: a.name,
+        icon: <Music2 className="h-3.5 w-3.5 text-muted-foreground" />,
+      })),
+      onSelect: (item: { id: string; label: string }, currentValue: string) => {
+        setSelectedArtistId(item.id);
+        // Remove the @query from the text
+        return currentValue.replace(/@\S*$/, "").trim();
+      },
+    };
+
+    const budgetTrigger = {
+      char: "$",
+      items: selectedArtistId
+        ? budgets.map((b: any) => ({
+            id: b.id,
+            label: `${b.label} — $${b.amount.toLocaleString()}`,
+            icon: <Wallet className="h-3.5 w-3.5 text-muted-foreground" />,
+          }))
+        : [],
+      onSelect: (item: { id: string; label: string }, currentValue: string) => {
+        // Extract a dollar amount if the user typed $500 etc., otherwise use budget
+        const dollarMatch = currentValue.match(/\$(\d[\d,]*\.?\d*)$/);
+        if (dollarMatch) {
+          const amount = parseFloat(dollarMatch[1].replace(/,/g, ""));
+          setExpenseAmount(amount);
+          setBudgetId(item.id);
+          return currentValue.replace(/\$[\d,]*\.?\d*$/, "").trim();
+        }
+        // Selected a budget from the list — no amount yet, but link the budget
+        setBudgetId(item.id);
+        return currentValue.replace(/\$\S*$/, "").trim();
+      },
+    };
+
+    return [artistTrigger, budgetTrigger];
+  }, [artists, budgets, selectedArtistId]);
 
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ["my-work"] });
@@ -92,29 +182,67 @@ export default function MyWork() {
     return isPast(d) && !isToday(d);
   };
 
+  // Find the selected artist name for the pill
+  const selectedArtist = artists.find((a: any) => a.id === selectedArtistId);
+  const selectedBudget = budgets.find((b: any) => b.id === budgetId);
+
   return (
     <AppLayout title="My Work">
       <div className="max-w-2xl mx-auto pb-20">
         <h1 className="text-foreground mb-6">My Work</h1>
 
         <PullToRefresh onRefresh={handleRefresh}>
-          {/* Add task input — always visible, feels like a notes app */}
-          <div className="flex items-center gap-3 mb-6">
-            <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
-            <input
-              ref={inputRef}
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddSubmit();
-                if (e.key === "Escape") { setNewTitle(""); inputRef.current?.blur(); }
-              }}
-              placeholder="Add a task…"
-              className="w-full bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground/50"
-            />
+          {/* Smart task input */}
+          <div className="mb-1">
+            <div className="flex items-center gap-3">
+              <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
+              <ItemEditor
+                value={newTitle}
+                onChange={setNewTitle}
+                onSubmit={handleAddSubmit}
+                onCancel={() => { setNewTitle(""); setSelectedArtistId(null); setExpenseAmount(null); setBudgetId(null); }}
+                placeholder="Add a task… use @ for artist, $ for expense"
+                autoFocus={false}
+                triggers={triggers}
+                singleLine
+              />
+            </div>
+
+            {/* Metadata pills showing parsed context */}
+            {(selectedArtist || expenseAmount || budgetId) && (
+              <div className="flex items-center gap-2 ml-7 mt-1.5 flex-wrap">
+                {selectedArtist && (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                    <Music2 className="h-3 w-3" />
+                    {selectedArtist.name}
+                    <button
+                      onClick={() => { setSelectedArtistId(null); setBudgetId(null); setExpenseAmount(null); }}
+                      className="ml-0.5 hover:text-foreground"
+                    >×</button>
+                  </span>
+                )}
+                {expenseAmount != null && (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                    ${expenseAmount.toLocaleString()}
+                    {selectedBudget && <span className="text-muted-foreground/60">· {selectedBudget.label}</span>}
+                    <button
+                      onClick={() => { setExpenseAmount(null); setBudgetId(null); }}
+                      className="ml-0.5 hover:text-foreground"
+                    >×</button>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
-          <div className="border-t border-border" />
+          {/* Hint text */}
+          {!selectedArtistId && newTitle.includes("$") && (
+            <p className="text-[11px] text-muted-foreground/50 ml-7 mt-1">
+              Tip: Type @ first to select an artist, then $ to pick from their budgets
+            </p>
+          )}
+
+          <div className="border-t border-border mt-4" />
 
           {isLoading ? (
             <div className="flex items-center justify-center py-20 text-muted-foreground text-sm">Loading…</div>
