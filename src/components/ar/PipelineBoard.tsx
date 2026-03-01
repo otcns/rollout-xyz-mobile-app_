@@ -81,21 +81,21 @@ function ProspectCard({ p, onSelect, onDelete, dragProvided, dragSnapshot }: any
       onClick={() => onSelect(p.id)}
       onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') onSelect(p.id); }}
       className={cn(
-        "w-full text-left rounded-xl border border-border bg-card p-3.5 hover:shadow-sm transition-shadow group cursor-pointer select-none",
+        "w-full text-left rounded-xl border border-border bg-card p-3 hover:shadow-sm transition-shadow group cursor-pointer select-none",
         dragSnapshot.isDragging && "shadow-lg ring-2 ring-primary/30"
       )}
     >
-      <div className="flex items-center gap-3">
-        <Avatar className="h-11 w-11 shrink-0 border border-border">
+      <div className="flex items-center gap-2.5">
+        <Avatar className="h-9 w-9 shrink-0 border border-border">
           {p.avatar_url && <AvatarImage src={p.avatar_url} alt={p.artist_name} />}
-          <AvatarFallback className="text-sm font-bold">
+          <AvatarFallback className="text-xs font-bold">
             {p.artist_name?.[0]}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <div className={cn("h-1.5 w-1.5 rounded-full shrink-0", priorityDot(p.priority))} />
-            <span className="font-semibold text-base truncate">{p.artist_name}</span>
+            <span className="font-semibold text-sm truncate">{p.artist_name}</span>
             {onDelete && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
