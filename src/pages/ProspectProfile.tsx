@@ -39,7 +39,7 @@ const STAGES = [
 const PRIORITIES = ["low", "medium", "high"];
 const ENGAGEMENT_TYPES = ["call", "email", "dm", "meeting", "show", "intro", "deal_sent"];
 const DEAL_STATUSES = ["not_discussed", "discussing", "offer_sent", "under_negotiation", "signed", "passed"];
-const DEAL_TYPES = ["distribution", "frontline_record", "partnership", "publishing"];
+const DEAL_TYPES = ["distribution", "frontline_record", "partnership", "publishing", "management"];
 
 const stageLabel = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 

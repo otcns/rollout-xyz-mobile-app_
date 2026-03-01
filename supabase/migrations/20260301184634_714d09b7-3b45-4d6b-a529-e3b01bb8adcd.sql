@@ -1,0 +1,1 @@
+ALTER TYPE public.deal_type ADD VALUE IF NOT EXISTS 'management';

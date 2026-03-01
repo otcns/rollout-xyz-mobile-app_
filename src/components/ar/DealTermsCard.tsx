@@ -150,6 +150,36 @@ export function DealTermsCard({ deal, onUpdate }: DealTermsCardProps) {
             <TermSelect label="Sync Control" value={terms.sync_control || ""} options={["Publisher", "Shared", "Writer"]} onChange={(v) => ut("sync_control", v)} />
           </>
         )}
+
+        {deal.deal_type === "management" && (
+          <>
+            <TermField label="Commission Rate %" value={terms.commission_rate} onChange={(v) => ut("commission_rate", v)} type="number" placeholder="15" />
+            <TermSelect label="Commission Base" value={terms.commission_base || ""} options={["Gross Income", "Net Income", "Adjusted Gross"]} onChange={(v) => ut("commission_base", v)} />
+            <TermSelect label="Scope of Services" value={terms.scope || ""} options={["All Entertainment", "Music Only", "Music + Touring", "Music + Acting", "Custom"]} onChange={(v) => ut("scope", v)} />
+            <TermSelect label="Exclusivity" value={terms.exclusivity || ""} options={["Exclusive", "Non Exclusive"]} onChange={(v) => ut("exclusivity", v)} />
+            <TermSelect label="Key Person" value={terms.key_person || ""} options={["Yes", "No"]} onChange={(v) => ut("key_person", v)} />
+            <TermSelect label="Power of Attorney" value={terms.power_of_attorney || ""} options={["Yes", "No", "Limited"]} onChange={(v) => ut("power_of_attorney", v)} />
+            <TermSelect label="Sunset Clause" value={terms.sunset_clause || ""} options={["Yes", "No"]} onChange={(v) => ut("sunset_clause", v)} />
+            {terms.sunset_clause === "Yes" && (
+              <>
+                <TermSelect label="Sunset Period" value={terms.sunset_period || ""} options={["1 Year", "2 Years", "3 Years", "5 Years"]} onChange={(v) => ut("sunset_period", v)} />
+                <TermSelect label="Sunset Rate Decline" value={terms.sunset_decline || ""} options={["Full Rate", "75% → 50%", "50% → 25%", "Sliding Scale", "Custom"]} onChange={(v) => ut("sunset_decline", v)} />
+              </>
+            )}
+            <TermSelect label="Commission on Touring" value={terms.touring_commission || ""} options={["Full Rate", "Reduced Rate", "Excluded"]} onChange={(v) => ut("touring_commission", v)} />
+            {terms.touring_commission === "Reduced Rate" && (
+              <TermField label="Touring Rate %" value={terms.touring_rate} onChange={(v) => ut("touring_rate", v)} type="number" placeholder="10" />
+            )}
+            <TermSelect label="Commission on Merch" value={terms.merch_commission || ""} options={["Full Rate", "Reduced Rate", "Excluded"]} onChange={(v) => ut("merch_commission", v)} />
+            <TermSelect label="Commission on Songwriting" value={terms.songwriting_commission || ""} options={["Full Rate", "Reduced Rate", "Excluded"]} onChange={(v) => ut("songwriting_commission", v)} />
+            <TermSelect label="Commission on Sync" value={terms.sync_commission || ""} options={["Full Rate", "Reduced Rate", "Excluded"]} onChange={(v) => ut("sync_commission", v)} />
+            <TermSelect label="Termination Notice" value={terms.termination_notice || ""} options={["30 Days", "60 Days", "90 Days"]} onChange={(v) => ut("termination_notice", v)} />
+            <TermSelect label="Performance Clause" value={terms.performance_clause || ""} options={["None", "Revenue Minimum", "Activity Minimum", "Custom"]} onChange={(v) => ut("performance_clause", v)} />
+            {terms.performance_clause && terms.performance_clause !== "None" && (
+              <TermField label="Performance Threshold" value={terms.performance_threshold} onChange={(v) => ut("performance_threshold", v)} placeholder="Describe threshold..." />
+            )}
+          </>
+        )}
       </div>
 
       <div className="mt-3">
