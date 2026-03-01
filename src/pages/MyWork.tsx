@@ -13,6 +13,14 @@ import { useCallback, useState, useMemo } from "react";
 import { toast } from "sonner";
 import { ItemEditor } from "@/components/ui/ItemEditor";
 import { useArtists } from "@/hooks/useArtists";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function MyWork() {
   const { user } = useAuth();
@@ -23,6 +31,7 @@ export default function MyWork() {
   const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
   const [expenseAmount, setExpenseAmount] = useState<number | null>(null);
   const [budgetId, setBudgetId] = useState<string | null>(null);
+  const [filterArtistId, setFilterArtistId] = useState<string>("all");
 
   const { data: artists = [] } = useArtists(teamId);
 
@@ -40,12 +49,12 @@ export default function MyWork() {
     enabled: !!selectedArtistId,
   });
 
-  const { data: tasks = [], isLoading } = useQuery({
+  const { data: allTasks = [], isLoading } = useQuery({
     queryKey: ["my-work", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tasks")
-        .select("*, artists(id, name), initiatives(name)")
+        .select("*, artists(id, name, avatar_url), initiatives(name)")
         .eq("assigned_to", user!.id)
         .eq("is_completed", false)
         .order("due_date", { ascending: true, nullsFirst: false });
@@ -186,10 +195,46 @@ export default function MyWork() {
   const selectedArtist = artists.find((a: any) => a.id === selectedArtistId);
   const selectedBudget = budgets.find((b: any) => b.id === budgetId);
 
+  // Filter tasks by artist
+  const tasks = filterArtistId === "all"
+    ? allTasks
+    : filterArtistId === "none"
+      ? allTasks.filter((t) => !t.artist_id)
+      : allTasks.filter((t) => t.artist_id === filterArtistId);
+
+  // Unique artists in tasks for filter dropdown
+  const taskArtists = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; avatar_url: string | null }>();
+    allTasks.forEach((t: any) => {
+      if (t.artists) map.set(t.artists.id, t.artists);
+    });
+    return Array.from(map.values());
+  }, [allTasks]);
+
   return (
     <AppLayout title="My Work">
       <div className="max-w-2xl mx-auto pb-20">
-        <h1 className="text-foreground mb-6">My Work</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-foreground">My Work</h1>
+          {taskArtists.length > 0 && (
+            <Select value={filterArtistId} onValueChange={setFilterArtistId}>
+              <SelectTrigger className="w-[160px] h-8 text-xs">
+                <SelectValue placeholder="All Artists" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Artists</SelectItem>
+                <SelectItem value="none">No Artist</SelectItem>
+                {taskArtists.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    <span className="flex items-center gap-2">
+                      {a.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
 
         <PullToRefresh onRefresh={handleRefresh}>
           {/* Smart task input */}
@@ -256,12 +301,12 @@ export default function MyWork() {
               {tasks.map((task) => (
                 <li
                   key={task.id}
-                  className="flex items-start gap-3 py-3 group"
+                  className="flex items-center gap-3 py-3 group"
                 >
                   <Checkbox
                     checked={false}
                     onCheckedChange={() => toggleComplete.mutate(task.id)}
-                    className="mt-0.5 shrink-0"
+                    className="shrink-0"
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-foreground leading-snug">{task.title}</p>
@@ -294,6 +339,19 @@ export default function MyWork() {
                       )}
                     </div>
                   </div>
+                  {task.artists && (
+                    <Avatar
+                      className="h-7 w-7 shrink-0 cursor-pointer"
+                      onClick={() => navigate(`/roster/${task.artists.id}`)}
+                    >
+                      {task.artists.avatar_url && (
+                        <AvatarImage src={task.artists.avatar_url} alt={task.artists.name} />
+                      )}
+                      <AvatarFallback className="text-[10px] font-bold bg-muted">
+                        {task.artists.name?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                 </li>
               ))}
             </ul>
