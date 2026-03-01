@@ -81,21 +81,21 @@ function ProspectCard({ p, onSelect, onDelete, dragProvided, dragSnapshot }: any
       onClick={() => onSelect(p.id)}
       onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') onSelect(p.id); }}
       className={cn(
-        "w-full text-left rounded-xl border border-border bg-card p-3 hover:shadow-sm transition-shadow group cursor-pointer select-none",
+        "w-full text-left rounded-xl border border-border bg-card p-4 hover:shadow-sm transition-shadow group cursor-pointer select-none min-h-[120px] flex flex-col justify-center",
         dragSnapshot.isDragging && "shadow-lg ring-2 ring-primary/30"
       )}
     >
-      <div className="flex items-center gap-2.5">
-        <Avatar className="h-8 w-8 shrink-0 border border-border">
+      <div className="flex items-center gap-3">
+        <Avatar className="h-11 w-11 shrink-0 border border-border">
           {p.avatar_url && <AvatarImage src={p.avatar_url} alt={p.artist_name} />}
-          <AvatarFallback className="text-xs font-bold">
+          <AvatarFallback className="text-sm font-bold">
             {p.artist_name?.[0]}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <div className={cn("h-1.5 w-1.5 rounded-full shrink-0", priorityDot(p.priority))} />
-            <span className="font-semibold text-sm truncate">{p.artist_name}</span>
+            <span className="font-semibold text-base truncate">{p.artist_name}</span>
             {onDelete && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -124,24 +124,16 @@ function ProspectCard({ p, onSelect, onDelete, dragProvided, dragSnapshot }: any
               </AlertDialog>
             )}
           </div>
-          <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
-            {p.primary_genre && (
-              <span className="truncate">{p.primary_genre}</span>
-            )}
-            {p.primary_genre && p.monthly_listeners > 0 && (
-              <span className="text-border">·</span>
-            )}
-            {p.monthly_listeners > 0 && (
-              <span className="flex items-center gap-0.5 shrink-0">
-                <Headphones className="h-2.5 w-2.5" />
-                {formatNum(p.monthly_listeners)}
-              </span>
-            )}
-          </div>
+          {p.monthly_listeners > 0 && (
+            <span className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
+              <Headphones className="h-3 w-3" />
+              {formatNum(p.monthly_listeners)}
+            </span>
+          )}
         </div>
       </div>
       {followUp && (
-        <div className={cn("text-[10px] font-medium mt-1.5 ml-[42px] inline-flex px-1.5 py-0.5 rounded-full", followUp.cls)}>
+        <div className={cn("text-[10px] font-medium mt-2 ml-[56px] inline-flex px-1.5 py-0.5 rounded-full", followUp.cls)}>
           Follow up {followUp.label}
         </div>
       )}
