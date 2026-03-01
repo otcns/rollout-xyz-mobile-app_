@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format, isToday, isTomorrow, isPast } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { Calendar, DollarSign, AlertCircle, Clock, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, parseDateFromText } from "@/lib/utils";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { useCallback, useState } from "react";
 import { ItemCardRead, MetaBadge } from "@/components/ui/ItemCard";
@@ -50,12 +50,13 @@ export default function MyWork() {
   });
 
   const createTask = useMutation({
-    mutationFn: async (title: string) => {
+    mutationFn: async ({ title, due_date }: { title: string; due_date?: string }) => {
       if (!teamId || !user?.id) throw new Error("Missing team or user");
       const { error } = await supabase.from("tasks").insert({
         title,
         team_id: teamId,
         assigned_to: user.id,
+        ...(due_date ? { due_date } : {}),
       });
       if (error) throw error;
     },
@@ -71,7 +72,11 @@ export default function MyWork() {
   const handleAddSubmit = () => {
     const trimmed = newTitle.trim();
     if (!trimmed) return;
-    createTask.mutate(trimmed);
+    const parsed = parseDateFromText(trimmed);
+    createTask.mutate({
+      title: parsed.title,
+      due_date: parsed.date ? format(parsed.date, "yyyy-MM-dd") : undefined,
+    });
   };
 
   const overdue = tasks.filter((t) => t.due_date && isPast(new Date(t.due_date)) && !isToday(new Date(t.due_date)));
