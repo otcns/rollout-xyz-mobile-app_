@@ -81,7 +81,7 @@ function ProspectCard({ p, onSelect, onDelete, dragProvided, dragSnapshot }: any
       onClick={() => onSelect(p.id)}
       onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') onSelect(p.id); }}
       className={cn(
-        "w-full text-left rounded-xl border border-border bg-card p-4 hover:shadow-sm transition-shadow group cursor-pointer select-none min-h-[120px] flex flex-col justify-center",
+        "w-full text-left rounded-xl border border-border bg-card p-3.5 hover:shadow-sm transition-shadow group cursor-pointer select-none",
         dragSnapshot.isDragging && "shadow-lg ring-2 ring-primary/30"
       )}
     >
