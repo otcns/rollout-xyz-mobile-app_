@@ -12,11 +12,18 @@ export default function PublicTimeline() {
     queryFn: async () => {
       const { data: artist, error: aErr } = await (supabase as any)
         .from("artists")
-        .select("id, name, banner_url, avatar_url, timeline_public_token, timeline_is_public")
+        .select("id, name, banner_url, avatar_url, timeline_public_token, timeline_is_public, team_id")
         .eq("timeline_public_token", token)
         .eq("timeline_is_public", true)
         .single();
       if (aErr) throw aErr;
+
+      // Fetch team logo
+      const { data: team } = await supabase
+        .from("teams")
+        .select("name, avatar_url")
+        .eq("id", artist.team_id)
+        .single();
 
       const { data: milestones, error: mErr } = await supabase
         .from("artist_milestones")
@@ -25,7 +32,7 @@ export default function PublicTimeline() {
         .order("date", { ascending: true });
       if (mErr) throw mErr;
 
-      return { artist, milestones };
+      return { artist, milestones, team };
     },
     enabled: !!token,
   });
@@ -46,13 +53,18 @@ export default function PublicTimeline() {
     );
   }
 
-  const { artist, milestones } = data;
+  const { artist, milestones, team } = data;
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border px-6 py-4 flex items-center justify-between">
-        <img src={rolloutLogo} alt="Rollout" className="h-6 invert dark:invert-0" />
+        <div className="flex items-center gap-3">
+          {team?.avatar_url && (
+            <img src={team.avatar_url} alt="" className="h-7 w-7 rounded-md object-cover" />
+          )}
+          <img src={rolloutLogo} alt="Rollout" className="h-6 invert dark:invert-0" />
+        </div>
         <Link
           to="/login"
           className="text-sm font-medium px-5 py-2 rounded-full border border-border hover:bg-accent transition-colors"

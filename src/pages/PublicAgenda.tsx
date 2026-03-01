@@ -17,11 +17,18 @@ export default function PublicAgenda() {
     queryFn: async () => {
       const { data: artist, error: aErr } = await (supabase as any)
         .from("artists")
-        .select("id, name, avatar_url, banner_url, agenda_public_token, agenda_is_public")
+        .select("id, name, avatar_url, banner_url, agenda_public_token, agenda_is_public, team_id")
         .eq("agenda_public_token", token)
         .eq("agenda_is_public", true)
         .single();
       if (aErr) throw aErr;
+
+      // Fetch team logo
+      const { data: team } = await supabase
+        .from("teams")
+        .select("name, avatar_url")
+        .eq("id", artist.team_id)
+        .single();
 
       const [tasksRes, budgetsRes, transactionsRes, initiativesRes, milestonesRes] = await Promise.all([
         supabase.from("tasks").select("*").eq("artist_id", artist.id).eq("is_completed", false).order("due_date", { ascending: true }),
@@ -33,6 +40,7 @@ export default function PublicAgenda() {
 
       return {
         artist,
+        team,
         tasks: tasksRes.data ?? [],
         budgets: budgetsRes.data ?? [],
         transactions: transactionsRes.data ?? [],
@@ -54,7 +62,7 @@ export default function PublicAgenda() {
     return <div className="flex min-h-screen items-center justify-center text-muted-foreground">This agenda is not available or has been disabled.</div>;
   }
 
-  const { artist, tasks, budgets, transactions, initiatives, milestones } = data;
+  const { artist, team, tasks, budgets, transactions, initiatives, milestones } = data;
   const now = new Date();
   const weekStart = startOfWeek(now);
   const weekEnd = endOfWeek(now);
@@ -86,7 +94,12 @@ export default function PublicAgenda() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border px-6 py-4 flex items-center justify-between">
-        <img src={rolloutLogo} alt="Rollout" className="h-6 invert dark:invert-0" />
+        <div className="flex items-center gap-3">
+          {team?.avatar_url && (
+            <img src={team.avatar_url} alt="" className="h-7 w-7 rounded-md object-cover" />
+          )}
+          <img src={rolloutLogo} alt="Rollout" className="h-6 invert dark:invert-0" />
+        </div>
         <Link to="/login" className="text-sm font-medium px-5 py-2 rounded-full border border-border hover:bg-accent transition-colors">
           Sign In
         </Link>

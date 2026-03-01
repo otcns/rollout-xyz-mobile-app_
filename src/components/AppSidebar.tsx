@@ -124,9 +124,13 @@ export function AppSidebar({ selectedTeamId, onSelectTeam }: AppSidebarProps) {
                 <button
                   className={`flex items-center gap-2 rounded-md text-sm hover:bg-accent transition-colors ${collapsed ? "justify-center w-8 h-8 p-0" : "w-full px-2 py-1.5"}`}
                 >
-                  <div className={`flex items-center justify-center rounded-md bg-muted text-xs font-semibold shrink-0 ${collapsed ? "h-8 w-8" : "h-7 w-7"}`}>
-                    {selectedTeam?.name?.[0] ?? "?"}
-                  </div>
+                   <div className={`flex items-center justify-center rounded-md bg-muted text-xs font-semibold shrink-0 overflow-hidden ${collapsed ? "h-8 w-8" : "h-7 w-7"}`}>
+                     {selectedTeam?.avatar_url ? (
+                       <img src={selectedTeam.avatar_url} alt="" className="h-full w-full object-cover" />
+                     ) : (
+                       selectedTeam?.name?.[0] ?? "?"
+                     )}
+                   </div>
                   {!collapsed && (
                     <>
                       <span className="flex-1 text-left truncate text-foreground">

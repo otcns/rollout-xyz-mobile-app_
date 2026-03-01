@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Building2, Check } from "lucide-react";
+import { useState, useRef } from "react";
+import { Check, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -42,6 +42,31 @@ interface BuildYourCompanyProps {
 export function BuildYourCompany({ teamId, onComplete }: BuildYourCompanyProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `team-logos/${teamId}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from("profile-photos")
+      .upload(path, file, { upsert: true });
+    if (uploadError) {
+      toast.error(uploadError.message);
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("profile-photos").getPublicUrl(path);
+    const url = `${urlData.publicUrl}?t=${Date.now()}`;
+    setLogoUrl(url);
+    // Save immediately to team
+    await supabase.from("teams").update({ avatar_url: url }).eq("id", teamId);
+    setUploading(false);
+  };
 
   const handleSave = async () => {
     if (!selected) return;
@@ -67,9 +92,32 @@ export function BuildYourCompany({ teamId, onComplete }: BuildYourCompanyProps) 
         transition={{ duration: 0.4 }}
         className="text-center max-w-lg"
       >
-        <div className="mx-auto mb-4 h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <Building2 className="h-7 w-7 text-primary" />
-        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleLogoUpload}
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="mx-auto mb-4 h-20 w-20 rounded-2xl border-2 border-dashed border-border bg-muted/50 flex items-center justify-center relative group hover:border-primary/50 transition-colors overflow-hidden"
+        >
+          {logoUrl ? (
+            <>
+              <img src={logoUrl} alt="Company logo" className="h-full w-full object-cover rounded-2xl" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
+                <Pencil className="h-4 w-4 text-white" />
+              </div>
+            </>
+          ) : (
+            <Pencil className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          )}
+        </button>
+        <p className="text-xs text-muted-foreground mb-3">
+          {uploading ? "Uploading..." : "Add your company logo"}
+        </p>
         <h2 className="text-2xl font-bold text-foreground mb-2">Build Your Company</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
           Tell us what kind of company you are so we can tailor your dashboard and tools to match your workflow.
