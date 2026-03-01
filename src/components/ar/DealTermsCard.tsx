@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
@@ -8,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 
 interface DealTermsCardProps {
   deal: any;
@@ -18,6 +18,12 @@ interface DealTermsCardProps {
 function updateTerms(deal: any, key: string, value: any, onUpdate: (f: string, v: any) => void) {
   const terms = { ...(deal.type_specific_terms || {}), [key]: value };
   onUpdate("type_specific_terms", terms);
+}
+
+function formatDollar(val: string): string {
+  const digits = val.replace(/[^0-9]/g, "");
+  if (!digits) return "";
+  return Number(digits).toLocaleString("en-US");
 }
 
 function TermField({ label, value, onChange, type = "text", placeholder }: {
@@ -33,6 +39,33 @@ function TermField({ label, value, onChange, type = "text", placeholder }: {
         placeholder={placeholder}
         className="h-8 text-sm"
       />
+    </div>
+  );
+}
+
+function DollarField({ label, value, onChange, placeholder }: {
+  label: string; value: any; onChange: (v: string) => void; placeholder?: string;
+}) {
+  const [display, setDisplay] = useState(() => value ? formatDollar(String(value)) : "");
+
+  return (
+    <div>
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <div className="relative">
+        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+        <Input
+          value={display}
+          onChange={(e) => {
+            setDisplay(formatDollar(e.target.value));
+          }}
+          onBlur={() => {
+            const raw = display.replace(/[^0-9]/g, "");
+            onChange(raw || "");
+          }}
+          placeholder={placeholder}
+          className="h-8 text-sm pl-6"
+        />
+      </div>
     </div>
   );
 }
@@ -56,13 +89,17 @@ function TermSelect({ label, value, options, onChange }: {
 export function DealTermsCard({ deal, onUpdate }: DealTermsCardProps) {
   const terms = deal.type_specific_terms || {};
   const ut = (k: string, v: any) => updateTerms(deal, k, v, onUpdate);
+  const hasAdvance = deal.advance != null && deal.advance !== "";
 
   const commonFields = (
     <>
-      <TermField label="Term Length" value={deal.term_length} onChange={(v) => onUpdate("term_length", v)} placeholder="e.g. 2 years" />
+      <TermSelect label="Term Length" value={deal.term_length || ""} options={["1 Year", "2 Years", "3 Years", "4 Years", "5 Years", "7 Years", "10 Years"]} onChange={(v) => onUpdate("term_length", v)} />
       <TermSelect label="Territory" value={deal.territory || "Worldwide"} options={["Worldwide", "North America", "US Only", "UK/EU", "Custom"]} onChange={(v) => onUpdate("territory", v)} />
       <TermSelect label="Accounting Frequency" value={deal.accounting_frequency || "Quarterly"} options={["Monthly", "Quarterly", "Semi Annual"]} onChange={(v) => onUpdate("accounting_frequency", v)} />
-      <TermField label="Advance" value={deal.advance?.toString()} onChange={(v) => onUpdate("advance", v ? parseFloat(v) : null)} type="number" placeholder="$0" />
+      <TermSelect label="Advance" value={hasAdvance ? "Yes" : "No"} options={["Yes", "No"]} onChange={(v) => { if (v === "No") onUpdate("advance", null); else onUpdate("advance", 0); }} />
+      {hasAdvance && (
+        <DollarField label="Advance Amount" value={deal.advance?.toString()} onChange={(v) => onUpdate("advance", v ? parseFloat(v) : null)} placeholder="0" />
+      )}
     </>
   );
 
@@ -83,12 +120,13 @@ export function DealTermsCard({ deal, onUpdate }: DealTermsCardProps) {
 
         {deal.deal_type === "frontline_record" && (
           <>
-            <TermField label="Albums" value={terms.albums} onChange={(v) => ut("albums", v)} placeholder="1, 2, 3+" />
-            <TermField label="Options" value={terms.options} onChange={(v) => ut("options", v)} placeholder="0, 1, 2, 3" />
+            <TermSelect label="Albums" value={terms.albums || ""} options={["1", "2", "3", "3+"]} onChange={(v) => ut("albums", v)} />
+            <TermSelect label="Options" value={terms.options || ""} options={["0", "1", "2", "3"]} onChange={(v) => ut("options", v)} />
             <TermSelect label="Masters Ownership" value={terms.masters_ownership || ""} options={["Label Owns", "Artist Owns", "Joint"]} onChange={(v) => ut("masters_ownership", v)} />
             <TermField label="Royalty Rate %" value={terms.royalty_rate} onChange={(v) => ut("royalty_rate", v)} type="number" placeholder="15" />
             <TermSelect label="Recoupment" value={terms.recoupment || ""} options={["Yes", "No"]} onChange={(v) => ut("recoupment", v)} />
-            <TermSelect label="Marketing" value={terms.marketing_commitment || ""} options={["None", "Light", "Standard", "Aggressive"]} onChange={(v) => ut("marketing_commitment", v)} />
+            <DollarField label="Marketing Amount" value={terms.marketing_amount} onChange={(v) => ut("marketing_amount", v)} placeholder="0" />
+            <DollarField label="Recording Amount" value={terms.recording_amount} onChange={(v) => ut("recording_amount", v)} placeholder="0" />
             <TermSelect label="Creative Control" value={terms.creative_control || ""} options={["Label", "Shared", "Artist"]} onChange={(v) => ut("creative_control", v)} />
           </>
         )}
@@ -99,7 +137,7 @@ export function DealTermsCard({ deal, onUpdate }: DealTermsCardProps) {
             <TermSelect label="Masters Ownership" value={terms.masters_ownership || ""} options={["Artist", "Label", "Joint"]} onChange={(v) => ut("masters_ownership", v)} />
             <TermSelect label="Who Pays Costs" value={terms.who_pays_costs || ""} options={["Label", "Artist", "Shared"]} onChange={(v) => ut("who_pays_costs", v)} />
             <TermSelect label="Recoupment" value={terms.recoupment || ""} options={["Yes", "No"]} onChange={(v) => ut("recoupment", v)} />
-            <TermSelect label="Marketing" value={terms.marketing_commitment || ""} options={["None", "Light", "Standard", "Aggressive"]} onChange={(v) => ut("marketing_commitment", v)} />
+            <DollarField label="Marketing Amount" value={terms.marketing_amount} onChange={(v) => ut("marketing_amount", v)} placeholder="0" />
           </>
         )}
 
