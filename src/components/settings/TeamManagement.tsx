@@ -254,6 +254,7 @@ export function TeamManagement({ showSection = "members" }: { showSection?: "mem
         .select("token")
         .single();
       if (error) throw error;
+      return data.token;
     },
     onSuccess: (token) => {
       const baseUrl = "https://rollout.cc";
