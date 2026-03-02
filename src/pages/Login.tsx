@@ -43,19 +43,17 @@ export default function Login() {
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: window.location.origin,
       },
     });
     if (error) {
       toast.error(error.message);
-    } else {
-      toast.success("Check your email to confirm your account!");
-      setMode("login");
+    } else if (signUpData.user) {
+      toast.success("Account created!");
     }
     setLoading(false);
   };

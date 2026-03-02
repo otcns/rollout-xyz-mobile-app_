@@ -91,19 +91,18 @@ export default function JoinTeam() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${window.location.origin}/join/${token}`,
       },
     });
     if (error) {
       toast.error(error.message);
-    } else {
-      toast.success("Check your email to confirm your account!");
-      setAuthMode("login");
+    } else if (signUpData.user) {
+      // Auto-confirmed, user is now authenticated — the useEffect will handle the next step
+      toast.success("Account created!");
     }
     setLoading(false);
   };
