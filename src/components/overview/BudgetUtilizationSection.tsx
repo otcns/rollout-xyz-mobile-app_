@@ -26,7 +26,7 @@ export function BudgetUtilizationSection({ totalExpenses, budgetRemaining, budge
         className={cn("h-3 [&>div]:transition-all", budgetUtilization > 90 ? "[&>div]:bg-destructive" : budgetUtilization > 70 ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500")}
       />
       <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-        <span>{openTasks} open tasks</span>
+        <span>{openTasks} open work items</span>
         {overdueTasks > 0 && (
           <span className="flex items-center gap-1 text-destructive">
             <AlertTriangle className="h-3 w-3" /> {overdueTasks} overdue

@@ -41,12 +41,12 @@ export default function Tasks() {
   });
 
   return (
-    <AppLayout title="My Tasks">
+    <AppLayout title="My Work">
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[40vh] text-muted-foreground">Loading...</div>
       ) : tasks.length === 0 ? (
         <div className="flex items-center justify-center min-h-[40vh] text-muted-foreground">
-          No tasks assigned to you
+          No work assigned to you
         </div>
       ) : (
         <div className="flex flex-col gap-1">

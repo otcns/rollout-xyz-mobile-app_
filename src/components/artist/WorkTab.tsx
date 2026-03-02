@@ -135,7 +135,7 @@ export function WorkTab({ artistId, teamId, showCompleted, showArchived }: WorkT
           >
             <TaskItem key={`__new_${c.id}`} isNew {...sharedContext} defaultCampaignId={c.id} autoFocus={isNewlyCreated} />
             <TaskList tasks={cTasks} {...sharedContext} droppableId={c.id} />
-            {cTasks.length === 0 && !isNewlyCreated && <p className="caption text-muted-foreground py-3 pl-2">No tasks yet.</p>}
+            {cTasks.length === 0 && !isNewlyCreated && <p className="caption text-muted-foreground py-3 pl-2">No work yet.</p>}
           </CollapsibleSection>
         );
       })}
@@ -411,7 +411,7 @@ function TaskItem({
 
   /* ── New task trigger ── */
   if (isNew && !showNew && !autoFocus) {
-    return <InlineAddTrigger label="New Task" onClick={() => setShowNew(true)} />;
+    return <InlineAddTrigger label="New Work" onClick={() => setShowNew(true)} />;
   }
 
   /* ── Editing mode (shared for new and existing) ── */
@@ -426,7 +426,7 @@ function TaskItem({
               onChange={setTitle}
               onSubmit={parseAndSubmit}
               onCancel={handleCancel}
-              placeholder={`Task name (use @ to assign, # to pick initiative, $ to select budget and just type the date like "tomorrow" to set due date easily)`}
+              placeholder={`Work item (use @ to assign, # campaign, $ budget, "tomorrow" for due date)`}
               autoFocus={autoFocus || showNew || isEditing}
               triggers={triggers}
               className="font-medium"

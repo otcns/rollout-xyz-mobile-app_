@@ -33,8 +33,8 @@ export function KpiCardsSection({ totalBudget, totalRevenue, totalExpenses, netP
       <KpiCard label="Total Revenue" value={fmt(totalRevenue)} icon={<TrendingUp className="h-4 w-4" />} accent="text-emerald-600" />
       <KpiCard label="Total Spending" value={fmt(totalExpenses)} icon={<TrendingDown className="h-4 w-4" />} accent="text-destructive" />
       <KpiCard label="Net P&L" value={fmtSigned(netProfit)} icon={<DollarSign className="h-4 w-4" />} accent={netProfit >= 0 ? "text-emerald-600" : "text-destructive"} />
-      <KpiCard label="Open Tasks" value={String(openTasks)} icon={<CheckCircle2 className="h-4 w-4" />} />
-      <KpiCard label="Overdue Tasks" value={String(overdueTasks)} icon={<AlertCircle className="h-4 w-4" />} accent={overdueTasks > 0 ? "text-destructive" : undefined} />
+      <KpiCard label="Open Work" value={String(openTasks)} icon={<CheckCircle2 className="h-4 w-4" />} />
+      <KpiCard label="Overdue Work" value={String(overdueTasks)} icon={<AlertCircle className="h-4 w-4" />} accent={overdueTasks > 0 ? "text-destructive" : undefined} />
     </div>
   );
 }

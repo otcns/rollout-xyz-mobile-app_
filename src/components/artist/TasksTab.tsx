@@ -45,7 +45,7 @@ export function TasksTab({ artistId, teamId }: TasksTabProps) {
       queryClient.invalidateQueries({ queryKey: ["tasks", artistId] });
       setForm({ title: "", due_date: "" });
       setShowAdd(false);
-      toast.success("Task created");
+      toast.success("Work item created");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -72,9 +72,9 @@ export function TasksTab({ artistId, teamId }: TasksTabProps) {
   return (
     <div className="mt-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold">Tasks</h3>
+        <h3 className="font-semibold">Work</h3>
         <Button variant="ghost" size="sm" onClick={() => setShowAdd(!showAdd)}>
-          <Plus className="h-4 w-4 mr-1" /> New Task
+          <Plus className="h-4 w-4 mr-1" /> New Work
         </Button>
       </div>
 
@@ -87,7 +87,7 @@ export function TasksTab({ artistId, teamId }: TasksTabProps) {
       )}
 
       {tasks.length === 0 && !showAdd ? (
-        <p className="text-sm text-muted-foreground">No tasks yet.</p>
+        <p className="text-sm text-muted-foreground">No work yet.</p>
       ) : (
         <div className="space-y-1">
           {tasks.map((t: any) => (

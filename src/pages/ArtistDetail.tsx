@@ -234,7 +234,7 @@ export default function ArtistDetail() {
             <span>${totalBudget.toLocaleString()}</span>
           </div>
           <span className="text-border">·</span>
-          <div className="caption-bold">{completedCount} tasks done</div>
+          <div className="caption-bold">{completedCount} work done</div>
           <div className="flex-1" />
           <PerformancePills artistId={artist.id} spotifyId={artist.spotify_id} artistName={artist.name} />
         </div>
@@ -258,7 +258,7 @@ export default function ArtistDetail() {
                       : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
-                  {tab === "timelines" ? "Release Plans" : tab === "work" ? "Tasks" : tab === "splits" ? "Splits" : tab}
+                  {tab === "timelines" ? "Release Plans" : tab === "work" ? "Work" : tab === "splits" ? "Splits" : tab}
                 </button>
               ))}
             </div>

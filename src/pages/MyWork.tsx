@@ -121,7 +121,7 @@ export default function MyWork() {
       setSelectedArtistId(null);
       setExpenseAmount(null);
       setBudgetId(null);
-      toast.success("Task added");
+      toast.success("Work item added");
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -225,7 +225,7 @@ export default function MyWork() {
                   tab === "tasks" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                Tasks
+                Work
               </button>
               <button
                 onClick={() => setTab("notes")}
@@ -265,7 +265,7 @@ export default function MyWork() {
                   onChange={setNewTitle}
                   onSubmit={handleAddSubmit}
                   onCancel={() => { setNewTitle(""); setSelectedArtistId(null); setExpenseAmount(null); setBudgetId(null); }}
-                  placeholder="Add a task… @ artist, $ expense"
+                  placeholder="Add work… @ artist, $ expense"
                   autoFocus={false}
                   triggers={triggers}
                   singleLine
@@ -299,7 +299,7 @@ export default function MyWork() {
               ) : tasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-1">
                   <p className="text-sm font-medium">All clear</p>
-                  <p className="text-xs">No tasks right now.</p>
+                  <p className="text-xs">No work right now.</p>
                 </div>
               ) : (
                 <ul className="divide-y divide-border">

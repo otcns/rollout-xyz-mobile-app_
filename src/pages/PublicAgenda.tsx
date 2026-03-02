@@ -123,7 +123,7 @@ export default function PublicAgenda() {
 
         {/* Stats */}
         <div className="flex items-center gap-4 text-sm mb-6">
-          <span>Open Tasks <strong>{tasks.length}</strong></span>
+          <span>Open Work <strong>{tasks.length}</strong></span>
           <span>Campaigns <strong>{initiatives.length}</strong></span>
         </div>
 
@@ -153,7 +153,7 @@ export default function PublicAgenda() {
           onToggle={() => toggle("week")}
         >
           {weeklyTasks.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-3">No tasks due this week.</p>
+            <p className="text-sm text-muted-foreground py-3">No work due this week.</p>
           ) : (
             <div className="space-y-2">
               {weeklyTasks.map((t: any) => (

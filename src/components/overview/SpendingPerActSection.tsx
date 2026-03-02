@@ -52,7 +52,7 @@ export function SpendingPerActSection({ artistBreakdown, artistCount, fmt, fmtSi
               <div className="flex-1 min-w-0">
                 <span className="font-bold text-base text-foreground truncate block">{artist.name}</span>
                 <span className="caption text-muted-foreground">
-                  {artist.campaignCount} campaigns · <CheckCircle2 className="inline h-3 w-3 text-emerald-500 -mt-px" /> {artist.completedTasks}/{artist.totalTasks} tasks
+                  {artist.campaignCount} campaigns · <CheckCircle2 className="inline h-3 w-3 text-emerald-500 -mt-px" /> {artist.completedTasks}/{artist.totalTasks} work
                 </span>
               </div>
               <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
