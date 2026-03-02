@@ -187,14 +187,7 @@ export default function Roster() {
   // Folder detail view
   if (selectedFolderId && selectedFolder) {
     return (
-      <AppLayout
-        title="Roster"
-        actions={
-          <Button onClick={() => setShowAddArtist(true)} size="sm" className="gap-1 hidden sm:inline-flex">
-            Add Artist
-          </Button>
-        }
-      >
+      <AppLayout title="Roster">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedFolderId(null)}>
@@ -202,6 +195,11 @@ export default function Roster() {
             </Button>
             <h2 className="text-lg font-semibold">{selectedFolder.name}</h2>
           </div>
+          <Button onClick={() => setShowAddArtist(true)} size="sm" className="gap-1 hidden sm:inline-flex">
+            Add Artist
+          </Button>
+        </div>
+        <div className="mb-4">
           {SortSelect}
         </div>
 
@@ -235,11 +233,12 @@ export default function Roster() {
 
   // Main roster view with DnD
   return (
-    <AppLayout
-      title="Roster"
-      actions={
+    <AppLayout title="Roster">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           {SortSelect}
+        </div>
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -255,8 +254,7 @@ export default function Roster() {
             Add Artist
           </Button>
         </div>
-      }
-    >
+      </div>
       <PullToRefresh onRefresh={handleRefresh}>
         {creatingFolder && (
           <div className="mb-4">
