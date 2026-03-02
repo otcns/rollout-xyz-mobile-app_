@@ -108,7 +108,7 @@ export function StepInviteMembers({ teamId, userId, addedArtists }: Props) {
         .select("token")
         .single();
       if (error) throw error;
-      const baseUrl = "https://rollout-xyz.lovable.app";
+      const baseUrl = "https://rollout.cc";
       const link = `${baseUrl}/join/${data.token}`;
       updateMember(idx, { generatedLink: link });
     } catch (err: any) {
