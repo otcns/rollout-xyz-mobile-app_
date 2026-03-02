@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DollarSign, Trash2, Plus } from "lucide-react";
+import { DollarSign, Trash2, Plus, Headphones } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -26,6 +26,7 @@ export function RosterFolderCard({ folder, artists, onOpenAddDialog, onDelete, o
       .filter((t: any) => t.type === "expense")
       .reduce((s: number, t: any) => s + Math.abs(Number(t.amount || 0)), 0);
   }, 0);
+  const totalListeners = artists.reduce((sum, a) => sum + (a.monthly_listeners || 0), 0);
 
   return (
     <div
@@ -78,10 +79,18 @@ export function RosterFolderCard({ folder, artists, onOpenAddDialog, onDelete, o
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{artists.length} artist{artists.length !== 1 ? "s" : ""}</span>
-          <span className="flex items-center gap-0.5">
-            <DollarSign className="h-3 w-3" />
-            {formatNum(totalSpent)}
-          </span>
+          <div className="flex items-center gap-3">
+            {totalListeners > 0 && (
+              <span className="flex items-center gap-0.5">
+                <Headphones className="h-3 w-3" />
+                {formatNum(totalListeners)}
+              </span>
+            )}
+            <span className="flex items-center gap-0.5">
+              <DollarSign className="h-3 w-3" />
+              {formatNum(totalSpent)}
+            </span>
+          </div>
         </div>
       </div>
     </div>
