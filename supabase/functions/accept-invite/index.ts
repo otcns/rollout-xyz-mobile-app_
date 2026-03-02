@@ -89,7 +89,7 @@ Deno.serve(async (req: Request) => {
 
     if (existing) {
       return new Response(JSON.stringify({ error: "You're already a member of this team", already_member: true }), {
-        status: 409,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
