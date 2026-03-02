@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Check, Loader2, Users, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import rolloutLogo from "@/assets/rollout-logo.png";
+import rolloutLogoWhite from "@/assets/rollout-logo-white.png";
 
 interface JoinResult {
   team_name: string;
@@ -207,7 +207,7 @@ export default function JoinTeam() {
         transition={{ duration: 0.4 }}
         key={step}
       >
-        <img src={rolloutLogo} alt="Rollout" className="h-8 brightness-0 invert opacity-90" />
+        <img src={rolloutLogoWhite} alt="Rollout" className="w-48 opacity-90" />
 
         <AnimatePresence mode="wait">
           {step === "auth" && !user && (
@@ -438,7 +438,7 @@ export default function JoinTeam() {
 
       <div className="flex-1" />
       <div className="relative z-10 pb-12">
-        <img src={rolloutLogo} alt="Rollout" className="h-8 brightness-0 invert opacity-90" />
+        <img src={rolloutLogoWhite} alt="Rollout" className="w-48 opacity-90" />
       </div>
     </div>
   );
