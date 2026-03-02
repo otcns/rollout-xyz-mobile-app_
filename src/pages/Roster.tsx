@@ -8,7 +8,14 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useRosterFolders, useCreateRosterFolder, useDeleteRosterFolder, useSetArtistFolder } from "@/hooks/useRosterFolders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FolderPlus, ArrowLeft } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FolderPlus, ArrowLeft, ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { ArtistCard } from "@/components/roster/ArtistCard";
 import { RosterFolderCard } from "@/components/roster/RosterFolderCard";
@@ -16,6 +23,34 @@ import { AddArtistDialog } from "@/components/roster/AddArtistDialog";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { MobileFAB } from "@/components/MobileFAB";
 import { useQueryClient } from "@tanstack/react-query";
+
+type SortOption = "a-z" | "z-a" | "listeners-high" | "listeners-low" | "spent-high" | "spent-low";
+
+function getArtistSpending(artist: any): number {
+  return (artist.transactions || [])
+    .filter((t: any) => t.type === "expense")
+    .reduce((s: number, t: any) => s + Math.abs(Number(t.amount || 0)), 0);
+}
+
+function sortArtists(list: any[], sort: SortOption): any[] {
+  const sorted = [...list];
+  switch (sort) {
+    case "a-z":
+      return sorted.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    case "z-a":
+      return sorted.sort((a, b) => (b.name || "").localeCompare(a.name || ""));
+    case "listeners-high":
+      return sorted.sort((a, b) => (b.monthly_listeners ?? 0) - (a.monthly_listeners ?? 0));
+    case "listeners-low":
+      return sorted.sort((a, b) => (a.monthly_listeners ?? 0) - (b.monthly_listeners ?? 0));
+    case "spent-high":
+      return sorted.sort((a, b) => getArtistSpending(b) - getArtistSpending(a));
+    case "spent-low":
+      return sorted.sort((a, b) => getArtistSpending(a) - getArtistSpending(b));
+    default:
+      return sorted;
+  }
+}
 
 export default function Roster() {
   const navigate = useNavigate();
@@ -34,6 +69,7 @@ export default function Roster() {
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(searchParams.get("folder"));
+  const [sortBy, setSortBy] = useState<SortOption>("a-z");
   const folderInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -124,11 +160,29 @@ export default function Roster() {
     }
   };
 
-  const uncategorizedArtists = artists.filter((a: any) => !a.folder_id);
+  const uncategorizedArtists = useMemo(() => sortArtists(artists.filter((a: any) => !a.folder_id), sortBy), [artists, sortBy]);
   const selectedFolder = selectedFolderId ? folders.find((f: any) => f.id === selectedFolderId) : null;
-  const folderArtists = selectedFolderId
-    ? artists.filter((a: any) => a.folder_id === selectedFolderId)
-    : [];
+  const folderArtists = useMemo(() => {
+    if (!selectedFolderId) return [];
+    return sortArtists(artists.filter((a: any) => a.folder_id === selectedFolderId), sortBy);
+  }, [artists, selectedFolderId, sortBy]);
+
+  const SortSelect = (
+    <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+      <SelectTrigger className="w-[170px] h-8 text-xs">
+        <ArrowUpDown className="h-3 w-3 mr-1.5 shrink-0" />
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="a-z">A → Z</SelectItem>
+        <SelectItem value="z-a">Z → A</SelectItem>
+        <SelectItem value="listeners-high">Highest Listeners</SelectItem>
+        <SelectItem value="listeners-low">Lowest Listeners</SelectItem>
+        <SelectItem value="spent-high">Most Spent</SelectItem>
+        <SelectItem value="spent-low">Least Spent</SelectItem>
+      </SelectContent>
+    </Select>
+  );
 
   // Folder detail view
   if (selectedFolderId && selectedFolder) {
@@ -141,11 +195,14 @@ export default function Roster() {
           </Button>
         }
       >
-        <div className="mb-4 flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedFolderId(null)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-lg font-semibold">{selectedFolder.name}</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedFolderId(null)}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h2 className="text-lg font-semibold">{selectedFolder.name}</h2>
+          </div>
+          {SortSelect}
         </div>
 
         {folderArtists.length === 0 ? (
@@ -182,6 +239,7 @@ export default function Roster() {
       title="Roster"
       actions={
         <div className="flex items-center gap-2">
+          {SortSelect}
           <Button
             variant="outline"
             size="sm"
