@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -24,6 +24,26 @@ type RevenueStatus = "received" | "outstanding";
 const EXPENSE_STATUSES: ExpenseStatus[] = ["paid", "sent", "pending"];
 const REVENUE_STATUSES: RevenueStatus[] = ["received", "outstanding"];
 
+/* ─── Undo Snackbar ─── */
+function UndoSnackbar({ message, onUndo, durationMs = 10000 }: { message: string; onUndo: () => void; durationMs?: number }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const start = Date.now();
+    const id = setInterval(() => setElapsed(Date.now() - start), 50);
+    return () => clearInterval(id);
+  }, []);
+  const pct = Math.min(elapsed / durationMs, 1) * 100;
+  return (
+    <div className="fixed bottom-6 right-6 z-50 bg-foreground text-background rounded-lg shadow-lg px-4 py-3 flex items-center gap-3 min-w-[260px] animate-in slide-in-from-bottom-4">
+      <span className="text-sm flex-1">{message}</span>
+      <Button variant="secondary" size="sm" className="h-7 text-xs shrink-0" onClick={onUndo}>Undo</Button>
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted/30 rounded-b-lg overflow-hidden">
+        <div className="h-full bg-primary transition-none" style={{ width: `${100 - pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
 export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<FinanceType>("expense");
@@ -31,6 +51,7 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [showNewItem, setShowNewItem] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   // New item form state
   const [itemAmount, setItemAmount] = useState("");
@@ -39,6 +60,9 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
   const [itemCategoryId, setItemCategoryId] = useState<string>("none");
   const [itemInitiativeId, setItemInitiativeId] = useState<string>("none");
   const [itemDate, setItemDate] = useState(format(new Date(), "yyyy-MM-dd"));
+
+  // Pending delete state for undo
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; timer: ReturnType<typeof setTimeout> } | null>(null);
 
   // Queries
   const { data: transactions = [] } = useQuery({
@@ -59,6 +83,19 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("finance_categories")
+        .select("*")
+        .eq("artist_id", artistId)
+        .order("created_at");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: budgets = [] } = useQuery({
+    queryKey: ["budgets", artistId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("budgets")
         .select("*")
         .eq("artist_id", artistId)
         .order("created_at");
@@ -109,13 +146,33 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
     mutationFn: async () => {
       const amt = parseFloat(itemAmount) || 0;
       const finalAmount = activeTab === "expense" ? -Math.abs(amt) : Math.abs(amt);
+
+      // If a budget label was selected (prefixed with "budget:"), auto-create a matching finance_category
+      let resolvedCategoryId = itemCategoryId;
+      if (itemCategoryId.startsWith("budget:")) {
+        const budgetLabel = itemCategoryId.replace("budget:", "");
+        // Check if category already exists
+        const existing = categories.find((c: any) => c.name === budgetLabel);
+        if (existing) {
+          resolvedCategoryId = existing.id;
+        } else {
+          const { data: newCat, error: catErr } = await supabase
+            .from("finance_categories")
+            .insert({ artist_id: artistId, name: budgetLabel } as any)
+            .select("id")
+            .single();
+          if (catErr) throw catErr;
+          resolvedCategoryId = newCat.id;
+        }
+      }
+
       const { error } = await supabase.from("transactions").insert({
         artist_id: artistId,
         amount: finalAmount,
         description: itemDesc.trim(),
         type: activeTab,
         status: itemStatus,
-        category_id: itemCategoryId === "none" ? null : itemCategoryId,
+        category_id: resolvedCategoryId === "none" ? null : resolvedCategoryId,
         initiative_id: itemInitiativeId === "none" ? null : itemInitiativeId,
         transaction_date: itemDate,
       } as any);
@@ -123,19 +180,43 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["finance-transactions", artistId] });
-      resetItemForm();
+      qc.invalidateQueries({ queryKey: ["finance-categories", artistId] });
+      // Save and continue: reset fields but keep form open
+      setItemAmount("");
+      setItemDesc("");
+      setItemDate(format(new Date(), "yyyy-MM-dd"));
+      // Keep status, category, initiative same for rapid entry
       toast.success("Item added");
+      // Refocus the amount input
+      setTimeout(() => amountInputRef.current?.focus(), 50);
     },
     onError: (e: any) => toast.error(e.message),
   });
 
-  const deleteTransaction = useMutation({
+  const actualDeleteTransaction = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("transactions").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["finance-transactions", artistId] }),
   });
+
+  const handleSoftDelete = useCallback((id: string) => {
+    // Cancel any existing pending delete
+    if (pendingDelete) clearTimeout(pendingDelete.timer);
+    const timer = setTimeout(() => {
+      actualDeleteTransaction.mutate(id);
+      setPendingDelete(null);
+    }, 10000);
+    setPendingDelete({ id, timer });
+  }, [pendingDelete, actualDeleteTransaction]);
+
+  const handleUndoDelete = useCallback(() => {
+    if (pendingDelete) {
+      clearTimeout(pendingDelete.timer);
+      setPendingDelete(null);
+    }
+  }, [pendingDelete]);
 
   const resetItemForm = () => {
     setShowNewItem(false);
@@ -147,17 +228,27 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
     setItemDate(format(new Date(), "yyyy-MM-dd"));
   };
 
-  // Computed
-  const filtered = transactions.filter((t: any) => t.type === activeTab);
-  const totalExpenses = transactions
+  const handleFormKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && itemDesc.trim() && itemAmount) {
+      e.preventDefault();
+      addTransaction.mutate();
+    }
+  };
+
+  // Computed - filter out pending delete
+  const visibleTransactions = pendingDelete
+    ? transactions.filter((t: any) => t.id !== pendingDelete.id)
+    : transactions;
+
+  const filtered = visibleTransactions.filter((t: any) => t.type === activeTab);
+  const totalExpenses = visibleTransactions
     .filter((t: any) => t.type === "expense")
     .reduce((s: number, t: any) => s + Math.abs(Number(t.amount)), 0);
-  const totalRevenue = transactions
+  const totalRevenue = visibleTransactions
     .filter((t: any) => t.type === "revenue")
     .reduce((s: number, t: any) => s + Math.abs(Number(t.amount)), 0);
   const profit = totalRevenue - totalExpenses;
 
-  // Group by category
   const initiativeMap = useMemo(() => {
     const m: Record<string, string> = {};
     initiatives.forEach((i: any) => { m[i.id] = i.name; });
@@ -170,12 +261,18 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
     return m;
   }, [categories]);
 
+  // Budget labels not already in finance_categories
+  const budgetOnlyLabels = useMemo(() => {
+    const catNames = new Set(categories.map((c: any) => c.name));
+    return budgets.filter((b: any) => !catNames.has(b.label));
+  }, [budgets, categories]);
+
   // Group filtered transactions by category
   const grouped = useMemo(() => {
     const groups: { id: string; name: string; items: any[]; total: number }[] = [];
-    const unsorted: any[] = [];
 
     const byCat: Record<string, any[]> = {};
+    const unsorted: any[] = [];
     filtered.forEach((t: any) => {
       if (t.category_id) {
         if (!byCat[t.category_id]) byCat[t.category_id] = [];
@@ -196,7 +293,6 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
 
     categories.forEach((c: any) => {
       const items = byCat[c.id] || [];
-      // Show category even if empty so user sees it
       groups.push({
         id: c.id,
         name: c.name,
@@ -217,6 +313,34 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
   };
 
   const statuses = activeTab === "expense" ? EXPENSE_STATUSES : REVENUE_STATUSES;
+
+  // Category select with budget labels merged
+  const renderCategorySelect = (value: string, onChange: (v: string) => void, className?: string) => (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className={cn("h-7 w-auto text-xs gap-1 border-border", className)}>
+        <SelectValue placeholder="Category" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">Uncategorized</SelectItem>
+        {categories.length > 0 && (
+          <SelectGroup>
+            <SelectLabel className="text-[10px] uppercase tracking-wider">Categories</SelectLabel>
+            {categories.map((c: any) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectGroup>
+        )}
+        {budgetOnlyLabels.length > 0 && (
+          <SelectGroup>
+            <SelectLabel className="text-[10px] uppercase tracking-wider">Budgets</SelectLabel>
+            {budgetOnlyLabels.map((b: any) => (
+              <SelectItem key={`budget:${b.label}`} value={`budget:${b.label}`}>{b.label}</SelectItem>
+            ))}
+          </SelectGroup>
+        )}
+      </SelectContent>
+    </Select>
+  );
 
   return (
     <div>
@@ -302,9 +426,11 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
             <span className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 font-bold text-sm mt-0.5 shrink-0">$</span>
             <div className="flex-1 space-y-2">
               <Input
+                ref={amountInputRef}
                 placeholder="Enter Amount"
                 value={itemAmount}
                 onChange={(e) => setItemAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                onKeyDown={handleFormKeyDown}
                 className="h-8 text-lg font-semibold"
                 autoFocus
               />
@@ -312,6 +438,7 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
                 placeholder="Enter Description"
                 value={itemDesc}
                 onChange={(e) => setItemDesc(e.target.value)}
+                onKeyDown={handleFormKeyDown}
                 className="h-8 text-sm"
               />
               {/* Badges row */}
@@ -339,30 +466,11 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
                   </SelectContent>
                 </Select>
 
-                <Select value={itemCategoryId} onValueChange={setItemCategoryId}>
-                  <SelectTrigger className="h-7 w-auto text-xs gap-1 border-border">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Uncategorized</SelectItem>
-                    {categories.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {renderCategorySelect(itemCategoryId, setItemCategoryId)}
               </div>
 
-              {/* Amount + category bottom row */}
+              {/* Date row */}
               <div className="flex items-center gap-2">
-                <div className="flex items-center border border-border rounded-md px-2 h-8 gap-1">
-                  <span className="text-xs text-muted-foreground">$</span>
-                  <input
-                    className="bg-transparent outline-none w-20 text-sm"
-                    value={itemAmount}
-                    onChange={(e) => setItemAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-                    placeholder="0"
-                  />
-                </div>
                 <Input
                   type="date"
                   value={itemDate}
@@ -371,16 +479,6 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
                 />
               </div>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={resetItemForm}>Discard</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={resetItemForm}>Cancel</Button>
@@ -440,8 +538,9 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
                           transaction={t}
                           categoryMap={categoryMap}
                           initiativeMap={initiativeMap}
-                          onDelete={() => deleteTransaction.mutate(t.id)}
+                          onDelete={() => handleSoftDelete(t.id)}
                           categories={categories}
+                          budgetOnlyLabels={budgetOnlyLabels}
                           initiatives={initiatives}
                           statuses={statuses}
                           artistId={artistId}
@@ -455,6 +554,11 @@ export function FinanceTab({ artistId, teamId }: FinanceTabProps) {
           })
         )}
       </div>
+
+      {/* Undo snackbar */}
+      {pendingDelete && (
+        <UndoSnackbar message="Transaction deleted." onUndo={handleUndoDelete} />
+      )}
     </div>
   );
 }
@@ -465,6 +569,7 @@ function TransactionItem({
   initiativeMap,
   onDelete,
   categories,
+  budgetOnlyLabels,
   initiatives,
   statuses,
   artistId,
@@ -474,6 +579,7 @@ function TransactionItem({
   initiativeMap: Record<string, string>;
   onDelete: () => void;
   categories: any[];
+  budgetOnlyLabels: any[];
   initiatives: any[];
   statuses: string[];
   artistId: string;
@@ -577,9 +683,22 @@ function TransactionItem({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Uncategorized</SelectItem>
-                {categories.map((c: any) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
+                {categories.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel className="text-[10px] uppercase tracking-wider">Categories</SelectLabel>
+                    {categories.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
+                {budgetOnlyLabels.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel className="text-[10px] uppercase tracking-wider">Budgets</SelectLabel>
+                    {budgetOnlyLabels.map((b: any) => (
+                      <SelectItem key={`budget:${b.label}`} value={`budget:${b.label}`}>{b.label}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
               </SelectContent>
             </Select>
             <input
@@ -631,18 +750,14 @@ function TransactionItem({
           )}
         </div>
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
-            <MoreVertical className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
-            <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
+        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </Button>
     </div>
   );
 }

@@ -21,6 +21,7 @@ import PublicTimeline from "./pages/PublicTimeline";
 import PublicAgenda from "./pages/PublicAgenda";
 import JoinTeam from "./pages/JoinTeam";
 import Staff from "./pages/Staff";
+import StaffDetail from "./pages/StaffDetail";
 import ARList from "./pages/ARList";
 import ApproveSplit from "./pages/ApproveSplit";
 // ProspectProfile is now rendered as a drawer inside ARList
@@ -57,6 +58,7 @@ function AppRoutes() {
       <Route path="/roster/:artistId" element={<ProtectedRoute><ArtistDetail /></ProtectedRoute>} />
       <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
       <Route path="/staff" element={<Navigate to="/overview" replace />} />
+      <Route path="/staff/:memberId" element={<ProtectedRoute><StaffDetail /></ProtectedRoute>} />
       <Route path="/ar" element={<ProtectedRoute><ARList /></ProtectedRoute>} />
       <Route path="/ar/:prospectId" element={<Navigate to="/ar" replace />} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

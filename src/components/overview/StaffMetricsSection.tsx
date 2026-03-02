@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, ListTodo, DollarSign, Info } from "lucide-react";
+import { CheckCircle2, ListTodo, DollarSign, Info, ArrowRight } from "lucide-react";
 import { StaffEmploymentDrawer } from "@/components/staff/StaffEmploymentDrawer";
 
 export interface StaffMember {
@@ -57,6 +58,7 @@ function ScoreCircle({ score }: { score: number }) {
 }
 
 export function StaffMetricsSection({ members, fmt, teamId }: StaffMetricsSectionProps) {
+  const navigate = useNavigate();
   const [drawerUser, setDrawerUser] = useState<{ id: string; name: string } | null>(null);
   if (members.length === 0) {
     return (
@@ -80,7 +82,8 @@ export function StaffMetricsSection({ members, fmt, teamId }: StaffMetricsSectio
           return (
             <div
               key={m.userId}
-              className="rounded-xl border border-border p-4 hover:bg-accent/30 transition-colors"
+              className="rounded-xl border border-border p-4 hover:bg-accent/30 transition-colors cursor-pointer"
+              onClick={() => navigate(`/staff/${m.userId}`)}
             >
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10 shrink-0">
@@ -100,7 +103,7 @@ export function StaffMetricsSection({ members, fmt, teamId }: StaffMetricsSectio
                 <div className="flex items-center gap-2 shrink-0">
                   {teamId && (
                     <button
-                      onClick={() => setDrawerUser({ id: m.userId, name: m.fullName })}
+                      onClick={(e) => { e.stopPropagation(); setDrawerUser({ id: m.userId, name: m.fullName }); }}
                       className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
                       title="Employment info"
                     >
