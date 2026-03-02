@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.scrape-chartmasters]
 verify_jwt = false
+
+[functions.accept-invite]
+verify_jwt = false
