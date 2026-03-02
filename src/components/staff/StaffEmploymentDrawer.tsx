@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DatePicker } from "@/components/ui/ItemPickers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { JobTitleSelect } from "@/components/ui/JobTitleSelect";
 import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { Label } from "@/components/ui/label";
@@ -155,10 +156,9 @@ export function StaffEmploymentDrawer({ open, onOpenChange, userId, teamId, staf
             {/* Job Title */}
             <div className="space-y-2">
               <Label className="text-xs font-semibold">Job Title</Label>
-              <Input
+              <JobTitleSelect
                 value={form.job_title}
-                onChange={(e) => setForm({ ...form, job_title: e.target.value })}
-                placeholder="e.g. A&R Manager"
+                onChange={(v) => setForm({ ...form, job_title: v })}
               />
             </div>
 

@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { JobTitleSelect } from "@/components/ui/JobTitleSelect";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -44,6 +45,7 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
   const [inviteRole, setInviteRole] = useState<string>("manager");
   const [addToStaff, setAddToStaff] = useState(false);
   const [staffEmploymentType, setStaffEmploymentType] = useState("w2");
+  const [jobTitle, setJobTitle] = useState("");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -57,6 +59,7 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
           role: role as any,
           add_to_staff: addToStaff,
           staff_employment_type: addToStaff ? staffEmploymentType : null,
+          invitee_job_title: jobTitle || null,
         })
         .select("token")
         .single();
@@ -94,6 +97,7 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
     setInviteRole("manager");
     setAddToStaff(false);
     setStaffEmploymentType("w2");
+    setJobTitle("");
   };
 
   return (
@@ -127,6 +131,12 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
                   ? "Artists have limited access to assigned artists only."
                   : "Guests have view-only access. Ideal for PR, videographers, etc."}
               </p>
+            </div>
+
+            {/* Job Title */}
+            <div className="space-y-2">
+              <Label>Job Title</Label>
+              <JobTitleSelect value={jobTitle} onChange={setJobTitle} />
             </div>
 
             {/* Add to Staff toggle */}
