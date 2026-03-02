@@ -19,6 +19,14 @@ interface JoinResult {
   artists: { id: string; name: string; avatar_url: string | null }[];
 }
 
+interface InvitePreview {
+  team_name: string | null;
+  team_avatar: string | null;
+  inviter_name: string | null;
+  invitee_name: string | null;
+  role: string;
+}
+
 export default function JoinTeam() {
   const { token } = useParams<{ token: string }>();
   const { user, loading: authLoading } = useAuth();
@@ -33,7 +41,16 @@ export default function JoinTeam() {
   const [loading, setLoading] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [joinResult, setJoinResult] = useState<JoinResult | null>(null);
+  const [invitePreview, setInvitePreview] = useState<InvitePreview | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch invite preview (team name, inviter) on mount
+  useEffect(() => {
+    if (!token) return;
+    supabase.functions.invoke("invite-preview", { body: { token } }).then(({ data }) => {
+      if (data && !data.error) setInvitePreview(data);
+    });
+  }, [token]);
 
   // When user becomes authenticated, move to profile step
   useEffect(() => {
@@ -202,9 +219,15 @@ export default function JoinTeam() {
               exit={{ opacity: 0 }}
             >
               <div>
-                <p className="text-lg font-semibold text-[hsl(40,30%,95%)]">You've been invited!</p>
+                <p className="text-lg font-semibold text-[hsl(40,30%,95%)]">
+                  {invitePreview?.inviter_name
+                    ? `${invitePreview.inviter_name} invited you to join ${invitePreview.team_name ?? "their team"}`
+                    : invitePreview?.team_name
+                      ? `You've been invited to ${invitePreview.team_name}`
+                      : "You've been invited!"}
+                </p>
                 <p className="text-sm text-[hsl(0,0%,55%)] mt-1">
-                  Sign in or create an account to join the team.
+                  Sign in or create an account to join{invitePreview?.team_name ? ` ${invitePreview.team_name}` : " the team"}.
                 </p>
               </div>
 
