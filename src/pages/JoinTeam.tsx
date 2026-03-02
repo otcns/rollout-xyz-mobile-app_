@@ -190,7 +190,7 @@ export default function JoinTeam() {
         transition={{ duration: 0.4 }}
         key={step}
       >
-        <img src={rolloutLogo} alt="Rollout" className="h-7 mb-1" />
+        <img src={rolloutLogo} alt="Rollout" className="h-8 brightness-0 invert opacity-90" />
 
         <AnimatePresence mode="wait">
           {step === "auth" && !user && (
