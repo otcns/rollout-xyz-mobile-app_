@@ -108,7 +108,8 @@ export function StepInviteMembers({ teamId, userId, addedArtists }: Props) {
         .select("token")
         .single();
       if (error) throw error;
-      const link = `${window.location.origin}/join/${data.token}`;
+      const baseUrl = "https://rollout-xyz.lovable.app";
+      const link = `${baseUrl}/join/${data.token}`;
       updateMember(idx, { generatedLink: link });
     } catch (err: any) {
       toast.error(err.message || "Failed to generate invite");

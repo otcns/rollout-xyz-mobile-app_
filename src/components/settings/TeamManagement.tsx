@@ -256,7 +256,8 @@ export function TeamManagement({ showSection = "members" }: { showSection?: "mem
       if (error) throw error;
     },
     onSuccess: (token) => {
-      const link = `${window.location.origin}/join/${token}`;
+      const baseUrl = "https://rollout-xyz.lovable.app";
+      const link = `${baseUrl}/join/${token}`;
       setGeneratedLink(link);
     },
     onError: (err: any) => {
