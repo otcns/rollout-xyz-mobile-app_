@@ -37,6 +37,12 @@ export function useDeleteRosterFolder() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      // Move artists back to uncategorized before deleting the folder
+      const { error: unassignError } = await supabase
+        .from("artists")
+        .update({ folder_id: null } as any)
+        .eq("folder_id", id);
+      if (unassignError) throw unassignError;
       const { error } = await supabase.from("roster_folders").delete().eq("id", id);
       if (error) throw error;
     },
