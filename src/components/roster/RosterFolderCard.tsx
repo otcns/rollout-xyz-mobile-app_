@@ -65,11 +65,11 @@ export function RosterFolderCard({ folder, artists, onOpenAddDialog, onDelete, o
           {[0, 1, 2, 3].map((i) => {
             const a = displayArtists[i];
             return (
-              <div key={i} className="aspect-square rounded-lg overflow-hidden bg-muted">
+              <div key={i} className="aspect-square rounded-full overflow-hidden bg-muted">
                 {a ? (
-                  <Avatar className="h-full w-full rounded-lg">
+                  <Avatar className="h-full w-full rounded-full">
                     <AvatarImage src={a.avatar_url ?? undefined} className="object-cover" />
-                    <AvatarFallback className="text-lg font-bold rounded-lg">{a.name?.[0]}</AvatarFallback>
+                    <AvatarFallback className="text-lg font-bold rounded-full">{a.name?.[0]}</AvatarFallback>
                   </Avatar>
                 ) : null}
               </div>
