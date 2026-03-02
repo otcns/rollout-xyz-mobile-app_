@@ -459,6 +459,7 @@ export type Database = {
           banner_url: string | null
           created_at: string
           folder_id: string | null
+          folder_sort_order: number | null
           genres: string[] | null
           id: string
           monthly_listeners: number | null
@@ -482,6 +483,7 @@ export type Database = {
           banner_url?: string | null
           created_at?: string
           folder_id?: string | null
+          folder_sort_order?: number | null
           genres?: string[] | null
           id?: string
           monthly_listeners?: number | null
@@ -505,6 +507,7 @@ export type Database = {
           banner_url?: string | null
           created_at?: string
           folder_id?: string | null
+          folder_sort_order?: number | null
           genres?: string[] | null
           id?: string
           monthly_listeners?: number | null

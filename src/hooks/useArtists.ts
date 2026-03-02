@@ -14,7 +14,7 @@ export function useArtists(teamId: string | null) {
           budgets(label, amount)
         `)
         .eq("team_id", teamId!)
-        .order("folder_sort_order", { ascending: true });
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return data;
     },

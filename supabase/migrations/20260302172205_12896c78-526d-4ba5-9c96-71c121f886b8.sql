@@ -1,0 +1,1 @@
+ALTER TABLE public.artists ADD COLUMN IF NOT EXISTS folder_sort_order integer DEFAULT 0;
