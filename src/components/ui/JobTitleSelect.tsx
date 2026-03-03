@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { ChevronDown, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const JOB_TITLE_DEPARTMENTS: { department: string; roles: string[] }[] = [
   {
@@ -104,7 +105,7 @@ export function JobTitleSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <div className="max-h-72 overflow-y-auto py-1">
+        <ScrollArea className="max-h-72 py-1">
           {JOB_TITLE_DEPARTMENTS.map((dept) => {
             const isExpanded = expandedDept === dept.department;
             return (
@@ -138,7 +139,7 @@ export function JobTitleSelect({
               </div>
             );
           })}
-        </div>
+        </ScrollArea>
       </PopoverContent>
     </Popover>
   );
