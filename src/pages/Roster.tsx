@@ -72,7 +72,10 @@ export default function Roster() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   // Show trial welcome dialog on first visit after signup
-  const [trialWelcomeOpen, setTrialWelcomeOpen] = useState(true);
+  const [trialWelcomeOpen, setTrialWelcomeOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !localStorage.getItem("rollout_trial_welcome_shown");
+  });
 
   useEffect(() => {
     if (!trialWelcomeOpen) {
