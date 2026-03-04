@@ -82,11 +82,12 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left panel – form */}
-      <div className="flex flex-1 flex-col justify-between bg-[hsl(35,25%,91%)] px-8 sm:px-16 lg:px-24 py-12">
+    <div className="flex h-[100dvh] flex-col overflow-hidden lg:flex-row">
+      {/* Left panel – form: scrollable on mobile, safe-area aware for iOS/Capacitor */}
+      <div className="safe-area-padding flex min-h-0 flex-1 flex-col overflow-y-auto bg-[hsl(35,25%,91%)]">
+        <div className="flex flex-1 flex-col justify-between px-5 py-6 sm:px-8 sm:py-8 lg:px-24 lg:py-12">
         <div>
-          <img src={rolloutLogo} alt="Rollout" className="h-16 sm:h-20 mb-16 sm:mb-24" />
+          <img src={rolloutLogo} alt="Rollout" className="mb-8 h-14 w-auto sm:mb-12 sm:h-16 lg:mb-24 lg:h-20" />
 
           {mode === "login" ? (
             <div className="max-w-md">
@@ -99,7 +100,7 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="Email"
-                  className="h-12 rounded-lg border-[hsl(0,0%,75%)] bg-transparent text-foreground placeholder:text-muted-foreground"
+                  className="h-12 rounded-lg border-[hsl(0,0%,75%)] bg-transparent text-base text-foreground placeholder:text-muted-foreground"
                 />
                 <Input
                   type="password"
@@ -107,13 +108,13 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Password"
-                  className="h-12 rounded-lg border-[hsl(0,0%,75%)] bg-transparent text-foreground placeholder:text-muted-foreground"
+                  className="h-12 rounded-lg border-[hsl(0,0%,75%)] bg-transparent text-base text-foreground placeholder:text-muted-foreground"
                 />
 
                 <button
                   type="button"
                   onClick={handleForgotPassword}
-                  className="text-sm text-muted-foreground hover:text-foreground self-start -mt-1 transition-colors"
+                  className="min-h-[44px] py-2 -mt-1 text-sm text-muted-foreground hover:text-foreground active:text-foreground self-start transition-colors touch-manipulation"
                 >
                   Forgot Password
                 </button>
@@ -160,7 +161,7 @@ export default function Login() {
                   onChange={(e) => setFullName(e.target.value)}
                   required
                   placeholder="Full Name"
-                  className="h-12 rounded-lg border-[hsl(0,0%,75%)] bg-transparent text-foreground placeholder:text-muted-foreground"
+                  className="h-12 rounded-lg border-[hsl(0,0%,75%)] bg-transparent text-base text-foreground placeholder:text-muted-foreground"
                 />
                 <Input
                   type="email"
@@ -168,7 +169,7 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="Email"
-                  className="h-12 rounded-lg border-[hsl(0,0%,75%)] bg-transparent text-foreground placeholder:text-muted-foreground"
+                  className="h-12 rounded-lg border-[hsl(0,0%,75%)] bg-transparent text-base text-foreground placeholder:text-muted-foreground"
                 />
                 <Input
                   type="password"
@@ -177,7 +178,7 @@ export default function Login() {
                   required
                   minLength={6}
                   placeholder="Password"
-                  className="h-12 rounded-lg border-[hsl(0,0%,75%)] bg-transparent text-foreground placeholder:text-muted-foreground"
+                  className="h-12 rounded-lg border-[hsl(0,0%,75%)] bg-transparent text-base text-foreground placeholder:text-muted-foreground"
                 />
                 <Button
                   type="submit"
@@ -190,7 +191,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setMode("login")}
-                  className="text-sm text-muted-foreground hover:text-foreground self-start transition-colors"
+                  className="min-h-[44px] py-2 text-sm text-muted-foreground hover:text-foreground active:text-foreground self-start transition-colors touch-manipulation"
                 >
                   ← Back to Sign In
                 </button>
@@ -203,7 +204,7 @@ export default function Login() {
         {mode === "login" && (
           <button
             onClick={() => setMode("signup")}
-            className="flex items-center justify-between max-w-md mt-12 px-5 py-4 rounded-lg border border-[hsl(0,0%,75%)] hover:bg-[hsl(35,20%,86%)] transition-colors"
+            className="mt-8 flex min-h-[44px] max-w-md items-center justify-between rounded-lg border border-[hsl(0,0%,88%)] bg-[hsl(0,0%,98%)] px-5 py-4 shadow-sm transition-colors hover:bg-[hsl(0,0%,96%)] active:bg-[hsl(0,0%,94%)]"
           >
             <span className="text-sm font-medium text-foreground">Don't have an account?</span>
             <span className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -211,6 +212,7 @@ export default function Login() {
             </span>
           </button>
         )}
+        </div>
       </div>
 
       {/* Right panel – waving flag video */}
