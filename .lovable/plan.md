@@ -1,53 +1,38 @@
 
 
-## Replace 3-dot menus with direct hover icons across the app
+## Two Changes
 
-The 3-dot (MoreVertical/MoreHorizontal) dropdown menus will be replaced with direct hover-visible action icons: Pencil (edit) and Trash (delete). This applies to every card and list item across the platform.
+### 1. Grandfathered premium account
 
-### Affected components and changes
+Add `is_grandfathered boolean default false` to `team_subscriptions`. Then in `check-subscription/index.ts`, after fetching the `sub` row, short-circuit if `is_grandfathered` is true — return Icon plan with 15 seats, permanent active status. Finally, set the flag to true for your team via a data migration.
 
-**1. ArtistCard** (`src/components/roster/ArtistCard.tsx`)
-- Remove DropdownMenu with MoreVertical
-- Add `onDelete` and `onEdit` props
-- Show Pencil + Trash icons on hover (opacity-0 → group-hover:opacity-100)
-- Trash triggers delete with AlertDialog confirmation
-- Pencil navigates to artist detail (or triggers edit callback)
-- Keep "Remove from category" as a secondary action if `insideFolder`
+**Files:**
+- DB migration: `ALTER TABLE team_subscriptions ADD COLUMN is_grandfathered boolean NOT NULL DEFAULT false;`
+- Second migration: `UPDATE team_subscriptions SET is_grandfathered = true WHERE team_id = (SELECT id FROM teams WHERE ... )` — we'll need to identify your team. Alternatively we set it by looking up your user.
+- `supabase/functions/check-subscription/index.ts`: After line 54 (fetching `sub`), add:
+```typescript
+if (sub?.is_grandfathered) {
+  return new Response(JSON.stringify({
+    plan: "icon", seat_limit: 15, status: "active",
+    is_trialing: false, trial_days_left: 0,
+    current_period_end: "2099-12-31T00:00:00Z",
+  }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
+}
+```
 
-**2. Roster page** (`src/pages/Roster.tsx`)
-- Add `useDeleteArtist` hook usage
-- Pass `onDelete` and `onEdit` to ArtistCard
-- Add delete artist mutation to `useArtists.ts`
+### 2. Artist avatar in new_artist email
 
-**3. useArtists hook** (`src/hooks/useArtists.ts`)
-- Add `useDeleteArtist` mutation that deletes from `artists` table and invalidates queries
+The issue is that the `new_artist` notification email doesn't include the artist's profile picture at all — the notification payload has no `avatar_url` field, and the email template for `new_artist` renders only text.
 
-**4. WorkItemRow** (`src/components/work/WorkItemRow.tsx`)
-- Replace DropdownMenu + MoreHorizontal with direct Trash2 icon button on hover
-- Remove dropdown entirely since the only action is delete
+**Fix chain:**
+1. **`NotificationPayload` interface** in `send-notification/index.ts`: Add `artist_avatar_url?: string`
+2. **`new_artist` email template** in `getSubjectAndContent` + `buildHtml`: Add an avatar card showing the artist's image (circular, 64px) next to the artist name
+3. **`notifyNewArtist`** in `src/lib/notifications.ts`: Accept `avatarUrl` parameter and pass it through as `artist_avatar_url`
+4. **`useCreateArtist`** in `src/hooks/useArtists.ts`: Pass `variables.avatar_url` to `notifyNewArtist`
 
-**5. FinanceTab** (`src/components/artist/FinanceTab.tsx`)
-- Replace MoreVertical dropdown on budget categories with direct Trash2 icon on hover
-
-**6. WorkTab campaigns** (`src/components/artist/WorkTab.tsx`)
-- Replace MoreHorizontal dropdown on campaigns with Pencil + Trash icons on hover
-- Keep AlertDialog for delete confirmation (destructive action)
-- The MoreHorizontal used as a delete button (line 480-482) → replace with Trash2 icon
-
-**7. LinksTab folders** (`src/components/artist/LinksTab.tsx`)
-- Replace MoreHorizontal dropdown on link folders with direct Trash2 icon on hover
-
-**8. TimelinesTab milestones** (`src/components/artist/TimelinesTab.tsx`)
-- This one is more complex — the dropdown has "Move to Timeline", "Attach Folder", and delete actions. Keep dropdown here since it has multi-action context menus, but replace the MoreVertical trigger with a more contextual approach, or keep as-is since it's not a simple edit/delete pattern.
-
-### Excluded from changes
-- **MobileBottomNav** — "More" button is navigation, not a card action
-- **NotesPanel** — dropdowns are text formatting toolbars, not card actions
-- **TimelinesTab milestone dropdown** — has complex multi-action menus (move to timeline, attach folder) that need a dropdown
-
-### Technical approach
-- Use `AlertDialog` for all delete confirmations on destructive actions (artists, campaigns)
-- Direct delete without confirmation for lightweight items (work items, budget categories) — matching existing behavior
-- Pencil icon uses `Pencil` from lucide-react
-- Both icons: `h-7 w-7` ghost buttons, `opacity-0 group-hover:opacity-100`
+The email will render a card like:
+```
+[Avatar Image]  New artist name
+                Added to your roster
+```
 
