@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Headphones, FolderOpen, CheckCircle2, DollarSign, Pencil, Trash2 } from "lucide-react";
+import { Headphones, FolderOpen, CheckCircle2, DollarSign, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -10,7 +10,6 @@ import {
 interface ArtistCardProps {
   artist: any;
   onClick: () => void;
-  onEdit?: () => void;
   onDelete?: () => void;
   dragHandleProps?: Record<string, any>;
   innerRef?: (el: HTMLElement | null) => void;
@@ -25,7 +24,7 @@ function formatNum(n: number): string {
   return String(n);
 }
 
-export const ArtistCard = React.memo(function ArtistCard({ artist, onClick, onEdit, onDelete, dragHandleProps, innerRef, draggableProps, insideFolder, onRemoveFromFolder }: ArtistCardProps) {
+export const ArtistCard = React.memo(function ArtistCard({ artist, onClick, onDelete, dragHandleProps, innerRef, draggableProps, insideFolder, onRemoveFromFolder }: ArtistCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const initiativeCount = artist.initiatives?.[0]?.count ?? 0;
   const taskCount = artist.tasks?.[0]?.count ?? 0;
@@ -57,11 +56,6 @@ export const ArtistCard = React.memo(function ArtistCard({ artist, onClick, onEd
             <div className="flex items-start justify-between gap-1">
               <h3 className="text-sm font-semibold truncate">{artist.name}</h3>
               <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                {onEdit && (
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                )}
                 {onDelete && (
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}>
                     <Trash2 className="h-3.5 w-3.5" />

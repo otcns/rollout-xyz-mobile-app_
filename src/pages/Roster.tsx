@@ -256,7 +256,6 @@ export default function Roster() {
                 key={artist.id}
                 artist={artist}
                 onClick={() => navigate(`/roster/${artist.id}`)}
-                onEdit={() => navigate(`/roster/${artist.id}`)}
                 onDelete={() => handleDeleteArtist(artist.id, artist.name)}
                 insideFolder
                 onRemoveFromFolder={() => handleRemoveArtistFromFolder(artist.id)}
@@ -397,7 +396,7 @@ export default function Roster() {
                             <ArtistCard
                               artist={artist}
                               onClick={() => navigate(`/roster/${artist.id}`)}
-                              onEdit={() => navigate(`/roster/${artist.id}`)}
+                              
                               onDelete={() => handleDeleteArtist(artist.id, artist.name)}
                               innerRef={dragProvided.innerRef}
                               draggableProps={dragProvided.draggableProps}
