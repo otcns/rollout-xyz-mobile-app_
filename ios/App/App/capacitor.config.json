@@ -1,0 +1,11 @@
+{
+	"appId": "app.lovable.c232114e61894b4b9345b3f5a8174ff3",
+	"appName": "Rollout",
+	"webDir": "dist",
+	"ios": {
+		"contentInset": "always"
+	},
+	"packageClassList": [
+		"PushNotificationsPlugin"
+	]
+}

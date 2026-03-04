@@ -117,26 +117,26 @@ export function BudgetSection({ artistId }: BudgetSectionProps) {
     <div className="space-y-6">
       {/* Summary Cards */}
       {budgets.length > 0 && (
-        <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-lg border border-border bg-card p-4">
-            <span className="text-sm text-muted-foreground">Total Budget</span>
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4">
+            <span className="text-[10px] sm:text-xs text-muted-foreground leading-tight block">Total Budget</span>
             <div className="mt-1 flex items-baseline gap-1">
-              <span className="text-xs text-muted-foreground">$</span>
-              <span className="text-2xl font-bold tracking-tight">{totalBudget.toLocaleString("en-US")}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground">$</span>
+              <span className="text-lg sm:text-2xl font-bold tracking-tight tabular-nums truncate">{totalBudget.toLocaleString("en-US")}</span>
             </div>
           </div>
-          <div className="rounded-lg border border-border bg-card p-4">
-            <span className="text-sm text-muted-foreground">Total Spending</span>
+          <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4">
+            <span className="text-[10px] sm:text-xs text-muted-foreground leading-tight block">Spending</span>
             <div className="mt-1 flex items-baseline gap-1">
-              <span className="text-xs text-destructive">$</span>
-              <span className="text-2xl font-bold tracking-tight text-destructive">{totalSpent.toLocaleString("en-US")}</span>
+              <span className="text-[10px] sm:text-xs text-destructive">$</span>
+              <span className="text-lg sm:text-2xl font-bold tracking-tight text-destructive tabular-nums truncate">{totalSpent.toLocaleString("en-US")}</span>
             </div>
           </div>
-          <div className="rounded-lg border border-border bg-card p-4">
-            <span className="text-sm text-muted-foreground">Remaining Budget</span>
+          <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4">
+            <span className="text-[10px] sm:text-xs text-muted-foreground leading-tight block">Remaining</span>
             <div className="mt-1 flex items-baseline gap-1">
-              <span className={`text-xs ${remaining >= 0 ? "text-emerald-600" : "text-destructive"}`}>$</span>
-              <span className={`text-2xl font-bold tracking-tight ${remaining >= 0 ? "text-emerald-600" : "text-destructive"}`}>{remaining.toLocaleString("en-US")}</span>
+              <span className={`text-[10px] sm:text-xs ${remaining >= 0 ? "text-emerald-600" : "text-destructive"}`}>$</span>
+              <span className={`text-lg sm:text-2xl font-bold tracking-tight tabular-nums truncate ${remaining >= 0 ? "text-emerald-600" : "text-destructive"}`}>{remaining.toLocaleString("en-US")}</span>
             </div>
           </div>
         </div>
@@ -144,8 +144,18 @@ export function BudgetSection({ artistId }: BudgetSectionProps) {
 
       {/* Category Cards */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold">Budget Categories</h3>
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <h3 className="font-semibold text-sm sm:text-base">Budget Categories</h3>
+          {!showAdd && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2.5 text-xs gap-1 shrink-0"
+              onClick={() => setShowAdd(true)}
+            >
+              <Plus className="h-3 w-3" /> Add Category
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -217,38 +227,30 @@ export function BudgetSection({ artistId }: BudgetSectionProps) {
             );
           })}
 
-          {/* Add Category card */}
-          {showAdd ? (
+          {/* Add Category inline form */}
+          {showAdd && (
             <div className="rounded-lg border border-dashed border-border bg-card p-4 space-y-3">
               <div className="flex gap-2">
                 <Input
                   placeholder="Category name"
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
-                  className="h-9 flex-1"
+                  className="h-8 flex-1 text-sm"
                   autoFocus
                 />
                 <Input
                   placeholder="$0.00"
                   value={formatWithCommas(newAmount)}
                   onChange={(e) => setNewAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-                  className="h-9 w-28"
+                  className="h-8 w-24 text-sm"
                   onKeyDown={(e) => { if (e.key === "Enter" && newLabel.trim()) addBudget.mutate(); }}
                 />
               </div>
               <div className="flex gap-2">
-                <Button size="sm" className="h-8 flex-1" onClick={() => addBudget.mutate()} disabled={!newLabel.trim()}>Add</Button>
-                <Button size="sm" variant="ghost" className="h-8" onClick={() => { setShowAdd(false); setNewLabel(""); setNewAmount(""); }}>Cancel</Button>
+                <Button size="sm" className="h-7 px-2.5 text-xs flex-1" onClick={() => addBudget.mutate()} disabled={!newLabel.trim()}>Add</Button>
+                <Button size="sm" variant="ghost" className="h-7 px-2.5 text-xs" onClick={() => { setShowAdd(false); setNewLabel(""); setNewAmount(""); }}>Cancel</Button>
               </div>
             </div>
-          ) : (
-            <button
-              onClick={() => setShowAdd(true)}
-              className="rounded-lg border border-dashed border-border bg-card p-4 flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors min-h-[120px]"
-            >
-              <Plus className="h-5 w-5" />
-              <span className="font-medium">Add Category</span>
-            </button>
           )}
         </div>
       </div>

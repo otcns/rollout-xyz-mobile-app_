@@ -19,9 +19,10 @@ interface AppLayoutProps {
   children: ReactNode;
   title: string;
   actions?: ReactNode;
+  backButton?: ReactNode;
 }
 
-export function AppLayout({ children, title, actions }: AppLayoutProps) {
+export function AppLayout({ children, title, actions, backButton }: AppLayoutProps) {
   const { selectedTeamId, setSelectedTeamId } = useSelectedTeam();
   const { signOut } = useAuth();
   const navigate = useNavigate();
@@ -37,9 +38,11 @@ export function AppLayout({ children, title, actions }: AppLayoutProps) {
         )}
 
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Top bar */}
-          <header className="flex h-14 items-center justify-between border-b border-border px-4 sm:px-6">
+          {/* Top bar — safe-area-top pads out the notch / Dynamic Island */}
+          <header className="sticky top-0 z-40 border-b border-border bg-background safe-area-top">
+          <div className="flex h-12 sm:h-14 items-center justify-between px-3 sm:px-6">
             <div className="flex items-center gap-2">
+              {backButton}
               {isMobile && teams.length > 0 ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -85,10 +88,11 @@ export function AppLayout({ children, title, actions }: AppLayoutProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+          </div>
           </header>
 
-          {/* Content */}
-          <main className="flex-1 p-4 sm:p-6 pb-20 sm:pb-6 overflow-x-hidden min-w-0 scroll-container">
+          {/* Content — pb-safe-nav on mobile clears the bottom nav + home indicator */}
+          <main className="flex-1 p-3 sm:p-6 pb-safe-nav sm:pb-6 overflow-x-hidden min-w-0 scroll-container">
             {children}
           </main>
         </div>

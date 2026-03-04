@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotes, useCreateNote, useUpdateNote, useDeleteNote, useShareNote, useUnshareNote, useTeamMembers } from "@/hooks/useNotes";
 import { Pin, PinOff, Trash2, Share2, ArrowLeft, Check, SquarePen, ChevronDown, Bold, Italic, Underline as UnderlineIcon, Strikethrough, List, ListOrdered, Type, Pilcrow, ListChecks } from "lucide-react";
@@ -43,7 +43,7 @@ const editorKeyDownHandler = (e: React.KeyboardEvent) => {
   }
 };
 
-export function NotesPanel() {
+export function NotesPanel({ createNoteRef }: { createNoteRef?: React.MutableRefObject<(() => void) | null> }) {
   const { user } = useAuth();
   const { data: notes = [], isLoading } = useNotes();
   const createNote = useCreateNote();
@@ -58,10 +58,16 @@ export function NotesPanel() {
   const selectedNote = useMemo(() => notes.find((n) => n.id === selectedId), [notes, selectedId]);
   const isOwner = selectedNote?.user_id === user?.id;
 
-  const handleCreate = async () => {
+  const handleCreate = useCallback(async () => {
     const result = await createNote.mutateAsync("");
     setSelectedId(result.id);
-  };
+  }, [createNote]);
+
+  useEffect(() => {
+    if (createNoteRef) {
+      createNoteRef.current = handleCreate;
+    }
+  }, [createNoteRef, handleCreate]);
 
   const handleContentChange = useCallback(
     (val: string) => {

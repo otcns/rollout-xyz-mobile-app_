@@ -1,17 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useState, useMemo } from "react";
+import { useCallback, useState, useMemo, useEffect, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { format } from "date-fns";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Music2, Wallet } from "lucide-react";
 import { cn, formatLocalDate } from "@/lib/utils";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { toast } from "sonner";
 import { useArtists } from "@/hooks/useArtists";
 import { NotesPanel } from "@/components/notes/NotesPanel";
+import { MobileFAB } from "@/components/MobileFAB";
 import { useNotes } from "@/hooks/useNotes";
 import { WorkItemRow } from "@/components/work/WorkItemRow";
 import { WorkItemCreator } from "@/components/work/WorkItemCreator";
@@ -29,8 +30,20 @@ export default function MyWork() {
   const { user } = useAuth();
   const { selectedTeamId: teamId } = useSelectedTeam();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<Tab>("tasks");
+  const tabFromUrl = (searchParams.get("tab") === "notes" ? "notes" : "tasks") as Tab;
+  const [tab, setTabState] = useState<Tab>(tabFromUrl);
+  useEffect(() => {
+    setTabState(tabFromUrl);
+  }, [tabFromUrl]);
+  const setTab = useCallback(
+    (t: Tab) => {
+      setTabState(t);
+      setSearchParams(t === "notes" ? { tab: "notes" } : {}, { replace: true });
+    },
+    [setSearchParams]
+  );
   const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
   const [expenseAmount, setExpenseAmount] = useState<number | null>(null);
   const [budgetId, setBudgetId] = useState<string | null>(null);
@@ -193,6 +206,17 @@ export default function MyWork() {
     await queryClient.invalidateQueries({ queryKey: ["my-work"] });
   }, [queryClient]);
 
+  const taskFocusRef = useRef<(() => void) | null>(null);
+  const noteCreateRef = useRef<(() => void) | null>(null);
+
+  const handleFABAction = useCallback((key: string) => {
+    if (key === "add-task") {
+      taskFocusRef.current?.();
+    } else if (key === "add-note") {
+      noteCreateRef.current?.();
+    }
+  }, []);
+
   const selectedArtist = artists.find((a: any) => a.id === selectedArtistId);
   const selectedBudget = budgets.find((b: any) => b.id === budgetId);
 
@@ -232,14 +256,14 @@ export default function MyWork() {
   return (
     <AppLayout title="My Work">
       <div className="mx-auto max-w-2xl pb-20">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <h1 className="text-foreground text-lg font-bold">My Work</h1>
+        <div className="flex items-center justify-between mb-2 sm:mb-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <h1 className="text-foreground text-base sm:text-lg font-bold">My Work</h1>
             <div className="flex items-center rounded-lg bg-muted p-0.5">
               <button
                 onClick={() => setTab("tasks")}
                 className={cn(
-                  "px-3 py-1 text-xs font-medium rounded-md transition-colors",
+                  "px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs font-medium rounded-md transition-colors",
                   tab === "tasks" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -248,7 +272,7 @@ export default function MyWork() {
               <button
                 onClick={() => setTab("notes")}
                 className={cn(
-                  "px-3 py-1 text-xs font-medium rounded-md transition-colors",
+                  "px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs font-medium rounded-md transition-colors",
                   tab === "notes" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -258,7 +282,7 @@ export default function MyWork() {
           </div>
           {tab === "tasks" && taskArtists.length > 0 && (
             <Select value={filterArtistId} onValueChange={setFilterArtistId}>
-              <SelectTrigger className="w-[140px] h-7 text-xs">
+              <SelectTrigger className="w-[120px] sm:w-[140px] h-7 text-[11px] sm:text-xs">
                 <SelectValue placeholder="All Artists" />
               </SelectTrigger>
               <SelectContent>
@@ -281,6 +305,7 @@ export default function MyWork() {
                 triggers={triggers}
                 onSubmit={(data) => createTask.mutate(data)}
                 metadataPills={metadataPills}
+                focusRef={taskFocusRef}
               />
 
               <div className="border-t border-border" />
@@ -311,10 +336,11 @@ export default function MyWork() {
               )}
             </>
           ) : (
-            <NotesPanel />
+            <NotesPanel createNoteRef={noteCreateRef} />
           )}
         </PullToRefresh>
       </div>
+      <MobileFAB onAction={handleFABAction} />
     </AppLayout>
   );
 }

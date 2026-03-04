@@ -152,17 +152,19 @@ export function ARContent() {
   return (
     <div>
       {/* Header row */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 sm:mb-6 gap-2">
-        <div>
-          <h1 className="text-foreground text-lg sm:text-2xl">A&R Research</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Track and manage artist prospects</p>
+      <div className="mb-3 sm:mb-5">
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <h1 className="text-foreground text-base sm:text-2xl font-semibold">A&R Research</h1>
         </div>
-        <div className="flex items-center gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pt-1">
-          <MetricPill label="Pipeline" value={pipelineCount} />
-          <MetricPill label="Offers" value={offersSent} />
-          <MetricPill label="Signed" value={signedCount} accent="text-emerald-500" />
-          <MetricPill label="Declined" value={declinedCount} accent={declinedCount > 0 ? "text-destructive" : undefined} />
-          <MetricPill label="Follow-ups" value={followUpsDue} accent={followUpsDue > 0 ? "text-amber-500" : undefined} />
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">Track and manage artist prospects</p>
+          <div className="flex items-center gap-2.5 sm:gap-4 overflow-x-auto scrollbar-hide shrink-0">
+            <MetricPill label="Pipeline" value={pipelineCount} />
+            <MetricPill label="Offers" value={offersSent} />
+            <MetricPill label="Signed" value={signedCount} accent="text-emerald-500" />
+            <MetricPill label="Declined" value={declinedCount} accent={declinedCount > 0 ? "text-destructive" : undefined} />
+            <MetricPill label="Follow-ups" value={followUpsDue} accent={followUpsDue > 0 ? "text-amber-500" : undefined} />
+          </div>
         </div>
       </div>
 

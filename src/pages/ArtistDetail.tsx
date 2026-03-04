@@ -3,7 +3,11 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { DollarSign, Target, Star, Upload, RefreshCw, Receipt, ArrowLeft } from "lucide-react";
+import { DollarSign, Target, Star, Upload, RefreshCw, Receipt, ArrowLeft, MoreVertical } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { PerformancePills } from "@/components/artist/PerformancePills";
 import { UpgradeDialog } from "@/components/billing/UpgradeDialog";
 import { useArtistDetail } from "@/hooks/useArtistDetail";
@@ -35,6 +39,7 @@ export default function ArtistDetail() {
   const totalBudget = useTotalBudget(artistId!);
   const { limits } = useTeamPlan();
   const [activeView, setActiveView] = useState<ActiveView>(fromFinance ? "finance" : "work");
+  const isMobile = useIsMobile();
   const [showCompleted, setShowCompleted] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -169,9 +174,25 @@ export default function ArtistDetail() {
 
   const tabItems: TabView[] = ["work", "links", "timelines", "splits"];
 
+  const handleBack = () => {
+    if (fromFinance) {
+      navigate("/overview?tab=finance");
+    } else {
+      navigate(artist?.folder_id ? `/roster?folder=${artist.folder_id}` : "/roster");
+    }
+  };
+
   return (
     <AppLayout
       title="Artist"
+      backButton={
+        <button
+          onClick={handleBack}
+          className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
+      }
       actions={
         <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
           {actionButtons.map(({ key, icon: Icon, label }) => (
@@ -180,31 +201,18 @@ export default function ArtistDetail() {
               variant={activeView === key ? "default" : "outline"}
               size="sm"
               onClick={() => handleViewChange(key)}
-              className="gap-1 shrink-0 text-xs h-7 px-2 sm:px-3 sm:h-8 sm:text-sm"
+              className="gap-1.5 shrink-0 text-xs h-8 px-2.5 sm:px-3 sm:text-sm"
             >
-              <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <Icon className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{label}</span>
             </Button>
           ))}
         </div>
       }
     >
-      {/* Back arrow */}
-      <button
-        onClick={() => {
-          if (fromFinance) {
-            navigate("/overview?tab=finance");
-          } else {
-            navigate(artist?.folder_id ? `/roster?folder=${artist.folder_id}` : "/roster");
-          }
-        }}
-        className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors mb-2 -mt-1"
-      >
-        <ArrowLeft className="h-4 w-4" />
-      </button>
       {/* Banner */}
-      <div className="relative rounded-lg bg-muted overflow-hidden mb-4 shadow-xl group">
-        <div className="relative h-48 sm:h-72 lg:h-[360px] overflow-hidden">
+      <div className="relative rounded-lg bg-muted overflow-hidden mb-3 sm:mb-4 shadow-xl group">
+        <div className="relative h-40 sm:h-72 lg:h-[360px] overflow-hidden">
           <img
             src={hasBanner ? bannerUrl! : defaultBanner}
             alt=""
@@ -227,17 +235,17 @@ export default function ArtistDetail() {
             <BannerUpload artistId={artist.id} currentBannerUrl={artist.banner_url} />
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-            <div className="flex items-end gap-3 sm:gap-4">
-              <Avatar className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 border-[3px] border-background shadow-2xl shrink-0">
+          <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-6">
+            <div className="flex items-end gap-2.5 sm:gap-4">
+              <Avatar className="h-14 w-14 sm:h-20 sm:w-20 lg:h-24 lg:w-24 border-2 border-background shadow-2xl shrink-0">
                 <AvatarImage src={avatarUrl ?? undefined} />
-                <AvatarFallback className="text-xl sm:text-2xl font-bold">{artist.name[0]}</AvatarFallback>
+                <AvatarFallback className="text-lg sm:text-2xl font-bold">{artist.name[0]}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 pb-0.5">
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight truncate drop-shadow-md">
+                <h2 className="text-lg sm:text-2xl lg:text-3xl font-bold text-white tracking-tight truncate drop-shadow-md">
                   {artist.name}
                 </h2>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs sm:text-sm text-white/80 mt-0.5">
+                <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-0.5 text-xs sm:text-sm text-white/80 mt-0.5">
                   {artist.genres && artist.genres.length > 0 && (
                     <span className="flex items-center gap-1">
                       <Star className="h-3 w-3 fill-current" /> {artist.genres.slice(0, 2).join(", ")}
@@ -252,13 +260,13 @@ export default function ArtistDetail() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 bg-card border-t border-border">
-          <div className="flex items-center gap-1.5 text-sm font-bold">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-2.5 bg-card border-t border-border">
+          <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold">
             <DollarSign className="h-3.5 w-3.5 text-emerald-500" />
             <span>${totalBudget.toLocaleString()}</span>
           </div>
           <span className="text-border">·</span>
-          <div className="caption-bold">{completedCount} work done</div>
+          <span className="text-xs sm:text-sm font-medium text-muted-foreground">{completedCount} work done</span>
           <div className="flex-1" />
           <PerformancePills artistId={artist.id} spotifyId={artist.spotify_id} artistName={artist.name} />
         </div>
@@ -266,13 +274,13 @@ export default function ArtistDetail() {
 
       <div className="flex gap-6">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+          <div className="flex items-center justify-between mb-3 gap-2">
             <div className="flex items-center gap-0 border border-border rounded-lg overflow-hidden shrink-0">
               {tabItems.map((tab) => (
                 <button
                   key={tab}
                   onClick={() => handleViewChange(tab)}
-                  className={`px-3 py-1.5 text-xs sm:text-sm font-medium capitalize transition-colors ${
+                  className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium capitalize transition-colors ${
                     activeView === tab
                       ? "bg-foreground text-background"
                       : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -283,15 +291,37 @@ export default function ArtistDetail() {
               ))}
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
-              <label className="flex items-center gap-1.5 cursor-pointer text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <span className="hidden sm:inline">Show</span> Completed
-                <Switch checked={showCompleted} onCheckedChange={setShowCompleted} />
-              </label>
-              {activeView === "work" && (
-                <WorkTabControls artistId={artist.id} showArchived={showArchived} setShowArchived={setShowArchived} />
-              )}
-            </div>
+            {isMobile ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent transition-colors shrink-0">
+                    <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="p-2 space-y-2 min-w-[160px]">
+                  <label className="flex items-center justify-between gap-3 cursor-pointer text-xs text-muted-foreground px-1">
+                    Completed
+                    <Switch checked={showCompleted} onCheckedChange={setShowCompleted} />
+                  </label>
+                  {activeView === "work" && (
+                    <label className="flex items-center justify-between gap-3 cursor-pointer text-xs text-muted-foreground px-1">
+                      Archived
+                      <Switch checked={showArchived} onCheckedChange={setShowArchived} />
+                    </label>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center gap-3 shrink-0">
+                <label className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  Completed
+                  <Switch checked={showCompleted} onCheckedChange={setShowCompleted} />
+                </label>
+                {activeView === "work" && (
+                  <WorkTabControls artistId={artist.id} showArchived={showArchived} setShowArchived={setShowArchived} />
+                )}
+              </div>
+            )}
           </div>
 
           {activeView === "finance" && <FinanceTab artistId={artist.id} teamId={artist.team_id} />}
@@ -314,12 +344,10 @@ import { Plus } from "lucide-react";
 
 function WorkTabControls({ artistId, showArchived, setShowArchived }: { artistId: string; showArchived: boolean; setShowArchived: (v: boolean) => void }) {
   return (
-    <div className="flex items-center gap-2 sm:gap-3">
-      <label className="flex items-center gap-1.5 cursor-pointer text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors">
-        Archived
-        <Switch checked={showArchived} onCheckedChange={setShowArchived} />
-      </label>
-    </div>
+    <label className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground hover:text-foreground transition-colors">
+      Archived
+      <Switch checked={showArchived} onCheckedChange={setShowArchived} />
+    </label>
   );
 }
 

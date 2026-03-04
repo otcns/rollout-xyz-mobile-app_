@@ -81,12 +81,12 @@ function ProspectCard({ p, onSelect, onDelete, dragProvided, dragSnapshot }: any
       onClick={() => onSelect(p.id)}
       onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') onSelect(p.id); }}
       className={cn(
-        "w-full text-left rounded-xl border border-border bg-card p-3 hover:shadow-sm transition-shadow group cursor-pointer select-none",
+        "w-full text-left rounded-xl border border-border bg-card p-2.5 sm:p-3 hover:shadow-sm transition-shadow group cursor-pointer select-none",
         dragSnapshot.isDragging && "shadow-lg ring-2 ring-primary/30"
       )}
     >
-      <div className="flex items-center gap-2.5">
-        <Avatar className="h-9 w-9 shrink-0 border border-border">
+      <div className="flex items-center gap-2">
+        <Avatar className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 border border-border">
           {p.avatar_url && <AvatarImage src={p.avatar_url} alt={p.artist_name} />}
           <AvatarFallback className="text-xs font-bold">
             {p.artist_name?.[0]}
@@ -95,14 +95,14 @@ function ProspectCard({ p, onSelect, onDelete, dragProvided, dragSnapshot }: any
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <div className={cn("h-1.5 w-1.5 rounded-full shrink-0", priorityDot(p.priority))} />
-            <span className="font-semibold text-sm truncate">{p.artist_name}</span>
+            <span className="font-semibold text-xs sm:text-sm truncate leading-tight">{p.artist_name}</span>
             {onDelete && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <button
                     onClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => e.stopPropagation()}
-                    className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive shrink-0"
+                    className="ml-auto opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive shrink-0 p-0.5 -mr-0.5"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -125,15 +125,15 @@ function ProspectCard({ p, onSelect, onDelete, dragProvided, dragSnapshot }: any
             )}
           </div>
           {p.monthly_listeners > 0 && (
-            <span className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
-              <Headphones className="h-3 w-3" />
+            <span className="flex items-center gap-1 mt-0.5 text-[10px] sm:text-xs text-muted-foreground">
+              <Headphones className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               {formatNum(p.monthly_listeners)}
             </span>
           )}
         </div>
       </div>
       {followUp && (
-        <div className={cn("text-[10px] font-medium mt-2 ml-[56px] inline-flex px-1.5 py-0.5 rounded-full", followUp.cls)}>
+        <div className={cn("text-[10px] font-medium mt-1.5 ml-10 sm:mt-2 sm:ml-[52px] inline-flex px-1.5 py-0.5 rounded-full", followUp.cls)}>
           Follow up {followUp.label}
         </div>
       )}
@@ -157,19 +157,19 @@ export function PipelineBoard({ prospects, onSelect, onStageChange, onDelete, on
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="pb-4 overflow-x-auto scrollbar-hide">
-        <div className="grid grid-cols-5 gap-4" style={{ minWidth: "850px" }}>
+      <div className="pb-4 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex gap-2.5 sm:gap-3" style={{ minWidth: "max-content" }}>
           {STAGES.map((stage) => {
             const items = activeProspects.filter((p: any) => p.stage === stage);
             return (
-              <div key={stage} className="min-w-0">
+              <div key={stage} className="w-[200px] sm:w-[220px] shrink-0">
                 {/* Column header */}
-                <div className="flex items-center gap-2 mb-3 px-1">
-                  <div className={cn("h-2.5 w-2.5 rounded-full shrink-0", stageDot(stage))} />
-                  <span className="text-sm font-semibold text-foreground">
+                <div className="flex items-center gap-1.5 mb-2.5 px-0.5">
+                  <div className={cn("h-2 w-2 rounded-full shrink-0", stageDot(stage))} />
+                  <span className="text-xs font-semibold text-foreground leading-none">
                     {stageLabel(stage)}
                   </span>
-                  <span className="text-xs text-muted-foreground font-medium">
+                  <span className="text-[11px] text-muted-foreground font-medium">
                     {items.length}
                   </span>
                 </div>
@@ -180,7 +180,7 @@ export function PipelineBoard({ prospects, onSelect, onStageChange, onDelete, on
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={cn(
-                        "space-y-2 rounded-xl p-1.5 transition-colors",
+                        "space-y-1.5 rounded-xl p-1 transition-colors",
                         snapshot.isDraggingOver && "bg-accent/40"
                       )}
                     >
@@ -199,7 +199,7 @@ export function PipelineBoard({ prospects, onSelect, onStageChange, onDelete, on
                       ))}
                       {provided.placeholder}
                       {items.length === 0 && !snapshot.isDraggingOver && (
-                        <div className="text-xs text-muted-foreground text-center py-6 border border-dashed border-border rounded-xl">
+                        <div className="text-xs text-muted-foreground text-center py-5 border border-dashed border-border rounded-xl">
                           No prospects
                         </div>
                       )}
@@ -211,7 +211,7 @@ export function PipelineBoard({ prospects, onSelect, onStageChange, onDelete, on
                 {onAddToStage && (
                   <button
                     onClick={() => onAddToStage(stage)}
-                    className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors mt-2 px-1 w-full"
+                    className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors mt-1.5 px-1 w-full"
                   >
                     <Plus className="h-3 w-3" /> New
                   </button>
@@ -224,13 +224,13 @@ export function PipelineBoard({ prospects, onSelect, onStageChange, onDelete, on
 
       {/* Declined / Passed section */}
       {passedProspects.length > 0 && (
-        <div className="mt-6 border-t border-border pt-5">
-          <div className="flex items-center gap-2 mb-3 px-1">
-            <Archive className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-semibold text-muted-foreground">Declined</span>
-            <span className="text-xs text-muted-foreground font-medium">{passedProspects.length}</span>
+        <div className="mt-5 border-t border-border pt-4">
+          <div className="flex items-center gap-1.5 mb-2.5 px-0.5">
+            <Archive className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs font-semibold text-muted-foreground">Declined</span>
+            <span className="text-[11px] text-muted-foreground font-medium">{passedProspects.length}</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2">
             {passedProspects.map((p: any) => (
               <div
                 key={p.id}
@@ -238,14 +238,14 @@ export function PipelineBoard({ prospects, onSelect, onStageChange, onDelete, on
                 tabIndex={0}
                 onClick={() => onSelect(p.id)}
                 onKeyDown={(e) => { if (e.key === 'Enter') onSelect(p.id); }}
-                className="flex items-center gap-2.5 rounded-xl border border-border bg-card/50 p-2.5 hover:bg-accent/30 cursor-pointer transition-colors group opacity-70 hover:opacity-100"
+                className="flex items-center gap-2 rounded-xl border border-border bg-card/50 p-2 hover:bg-accent/30 cursor-pointer transition-colors group opacity-70 hover:opacity-100"
               >
                 <Avatar className="h-7 w-7 shrink-0 border border-border">
                   {p.avatar_url && <AvatarImage src={p.avatar_url} alt={p.artist_name} />}
                   <AvatarFallback className="text-[10px] font-bold">{p.artist_name?.[0]}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <span className="font-medium text-xs text-muted-foreground truncate block">{p.artist_name}</span>
+                  <span className="font-medium text-xs text-muted-foreground truncate block leading-tight">{p.artist_name}</span>
                   {p.monthly_listeners > 0 && (
                     <span className="text-[10px] text-muted-foreground/60">
                       <Headphones className="inline h-2.5 w-2.5 mr-0.5" />
@@ -258,7 +258,7 @@ export function PipelineBoard({ prospects, onSelect, onStageChange, onDelete, on
                     <AlertDialogTrigger asChild>
                       <button
                         onClick={(e) => e.stopPropagation()}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive shrink-0"
+                        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive shrink-0"
                       >
                         <Trash2 className="h-3 w-3" />
                       </button>

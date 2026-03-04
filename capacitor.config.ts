@@ -10,6 +10,11 @@ const config: CapacitorConfig = {
   //   url: 'https://c232114e-6189-4b4b-9345-b3f5a8174ff3.lovableproject.com?forceHideBadge=true',
   //   cleartext: true,
   // },
+  ios: {
+    // Let the web layer extend edge-to-edge so CSS env(safe-area-inset-*)
+    // correctly describes the notch / Dynamic Island / home indicator regions.
+    contentInset: 'always',
+  },
 };
 
 export default config;

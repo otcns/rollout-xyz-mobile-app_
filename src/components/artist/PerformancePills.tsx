@@ -84,17 +84,17 @@ export function PerformancePills({ artistId, spotifyId, artistName, variant = "b
       {pills.map((pill) => (
         <div
           key={pill.label}
-          className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-lg backdrop-blur-md border border-white/10 text-white"
+          className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded-md border border-border/50"
         >
-          <pill.icon className="h-3 w-3 text-white/70" />
-          <span className="text-[10px] uppercase tracking-wider text-white/60">{pill.label}</span>
-          <span className="text-sm font-bold">{pill.value}</span>
+          <pill.icon className="h-3 w-3 text-muted-foreground" />
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{pill.label}</span>
+          <span className="text-xs font-bold">{pill.value}</span>
         </div>
       ))}
       <Button
         variant="ghost"
         size="icon"
-        className="h-6 w-6 text-white/50 hover:text-white hover:bg-white/10"
+        className="h-6 w-6 text-muted-foreground hover:text-foreground"
         onClick={() => sync()}
         disabled={isSyncing}
         title="Refresh performance data"

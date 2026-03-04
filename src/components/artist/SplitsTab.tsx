@@ -69,12 +69,12 @@ export function SplitsTab({ artistId, teamId }: Props) {
       )}
 
       {projects.length === 0 && !showWizard && (
-        <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-          <p className="text-muted-foreground text-sm max-w-md">
+        <div className="flex flex-col items-center justify-center py-12 text-center gap-4">
+          <p className="text-sm text-muted-foreground max-w-xs">
             Track master and publishing ownership for every song. Add a release to start building split sheets and send them to contributors for approval.
           </p>
-          <Button size="sm" variant="outline" className="gap-1" onClick={() => setShowWizard(true)}>
-            <Plus className="h-3.5 w-3.5" /> Add Release
+          <Button variant="outline" className="gap-2 h-9 text-sm px-4" onClick={() => setShowWizard(true)}>
+            <Plus className="h-4 w-4" /> Add Release
           </Button>
         </div>
       )}

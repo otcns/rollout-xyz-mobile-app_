@@ -4,16 +4,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamPlan } from "@/hooks/useTeamPlan";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { UpgradeDialog } from "@/components/billing/UpgradeDialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import {
   Select,
   SelectContent,
@@ -25,7 +32,7 @@ import { JobTitleSelect } from "@/components/ui/JobTitleSelect";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Link2 } from "lucide-react";
 import { toast } from "sonner";
 
 const roleLabelMap: Record<string, string> = {
@@ -33,6 +40,12 @@ const roleLabelMap: Record<string, string> = {
   manager: "Manager",
   artist: "Artist",
   guest: "Guest",
+};
+
+const roleDescriptions: Record<string, string> = {
+  manager: "Can view and edit all artists on the team.",
+  artist: "Limited access to assigned artists only.",
+  guest: "View-only. Ideal for PR, videographers, and collaborators.",
 };
 
 interface InviteMemberDialogProps {
@@ -44,9 +57,9 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
   const { user } = useAuth();
   const { selectedTeamId: teamId } = useSelectedTeam();
   const { limits, seatLimit } = useTeamPlan();
+  const isMobile = useIsMobile();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
-  // Count current team members
   const { data: memberCount = 0 } = useQuery({
     queryKey: ["team-member-count", teamId],
     queryFn: async () => {
@@ -85,22 +98,16 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
       return data.token;
     },
     onSuccess: (token) => {
-      const baseUrl = "https://app.rollout.cc";
-      const link = `${baseUrl}/join/${token}`;
+      const link = `https://app.rollout.cc/join/${token}`;
       setGeneratedLink(link);
     },
-    onError: (err: any) => {
-      toast.error(err.message || "Failed to create invite");
-    },
+    onError: (err: any) => toast.error(err.message || "Failed to create invite"),
   });
 
   const handleCreateInvite = () => {
-    if (!limits.canInviteMembers) {
-      setUpgradeOpen(true);
-      return;
-    }
+    if (!limits.canInviteMembers) { setUpgradeOpen(true); return; }
     if (memberCount >= seatLimit) {
-      toast.error(`You've reached your seat limit (${seatLimit}). Upgrade your plan for more seats.`);
+      toast.error(`You've reached your seat limit (${seatLimit}). Upgrade for more seats.`);
       setUpgradeOpen(true);
       return;
     }
@@ -127,6 +134,109 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
     setJobTitle("");
   };
 
+  // ── Shared form content ──────────────────────────────────────────────────
+  const formContent = !generatedLink ? (
+    <div className="space-y-4">
+      {/* Role */}
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium">Role</Label>
+        <Select value={inviteRole} onValueChange={setInviteRole}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="manager">Manager</SelectItem>
+            <SelectItem value="artist">Artist</SelectItem>
+            <SelectItem value="guest">Guest</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">{roleDescriptions[inviteRole]}</p>
+      </div>
+
+      {/* Job Title */}
+      <div className="space-y-1.5">
+        <Label className="text-sm font-medium">Job Title</Label>
+        <JobTitleSelect value={jobTitle} onChange={setJobTitle} />
+      </div>
+
+      {/* Add to Staff */}
+      <div className="rounded-lg border border-border p-3 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium">Add to Staff</p>
+            <p className="text-xs text-muted-foreground">Track employment &amp; payroll info</p>
+          </div>
+          <Switch checked={addToStaff} onCheckedChange={setAddToStaff} />
+        </div>
+        {addToStaff && (
+          <div className="space-y-1.5 pt-1">
+            <Label className="text-xs text-muted-foreground">Employment Type</Label>
+            <Select value={staffEmploymentType} onValueChange={setStaffEmploymentType}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="w2">W-2 Employee</SelectItem>
+                <SelectItem value="1099">1099 Contractor</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+
+      <Button
+        className="w-full"
+        onClick={handleCreateInvite}
+        disabled={createInvite.isPending}
+      >
+        {createInvite.isPending ? "Generating…" : "Generate Link"}
+      </Button>
+    </div>
+  ) : (
+    // ── Generated link step ──────────────────────────────────────────────
+    <div className="space-y-4">
+      <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-3">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+          <span className="text-xs text-muted-foreground font-normal truncate">{generatedLink}</span>
+        </div>
+        <Button className="w-full gap-2" onClick={handleCopy}>
+          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          {copied ? "Copied!" : "Copy Invite Link"}
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground text-center">
+        Will be added as{" "}
+        <span className="font-semibold text-foreground">{roleLabelMap[inviteRole] ?? inviteRole}</span>.
+        {" "}Link expires in 7 days.
+      </p>
+      <Button variant="outline" className="w-full" onClick={handleClose}>
+        Done
+      </Button>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <Drawer open={open} onOpenChange={(o) => !o && handleClose()}>
+          <DrawerContent>
+            <DrawerHeader className="text-left px-5 pt-5 pb-3">
+              <DrawerTitle className="text-xl">Invite a team member</DrawerTitle>
+              <DrawerDescription className="text-sm mt-0.5">
+                Generate a shareable invite link. It expires in 7 days.
+              </DrawerDescription>
+            </DrawerHeader>
+            <div className="px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] space-y-0">
+              {formContent}
+            </div>
+          </DrawerContent>
+        </Drawer>
+        <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} feature="Team invites" />
+      </>
+    );
+  }
+
   return (
     <>
       <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
@@ -137,107 +247,7 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
               Generate a shareable invite link. It expires in 7 days.
             </DialogDescription>
           </DialogHeader>
-
-          {!generatedLink ? (
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Select value={inviteRole} onValueChange={setInviteRole}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="artist">Artist</SelectItem>
-                    <SelectItem value="guest">Guest</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  {inviteRole === "manager"
-                    ? "Managers can view and edit all artists on the team."
-                    : inviteRole === "artist"
-                    ? "Artists have limited access to assigned artists only."
-                    : "Guests have view-only access. Ideal for PR, videographers, etc."}
-                </p>
-              </div>
-
-              {/* Job Title */}
-              <div className="space-y-2">
-                <Label>Job Title</Label>
-                <JobTitleSelect value={jobTitle} onChange={setJobTitle} />
-              </div>
-
-              {/* Add to Staff toggle */}
-              <div className="space-y-3 rounded-lg border border-border p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-medium">Add to Staff</Label>
-                    <p className="text-xs text-muted-foreground">Track employment &amp; payroll info</p>
-                  </div>
-                  <Switch checked={addToStaff} onCheckedChange={setAddToStaff} />
-                </div>
-
-                {addToStaff && (
-                  <div className="space-y-2 pt-1">
-                    <Label className="text-xs">Employment Type</Label>
-                    <Select value={staffEmploymentType} onValueChange={setStaffEmploymentType}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="w2">W-2 Employee</SelectItem>
-                        <SelectItem value="1099">1099 Contractor</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              <DialogFooter>
-                <Button
-                  onClick={handleCreateInvite}
-                  disabled={createInvite.isPending}
-                >
-                  {createInvite.isPending ? "Generating..." : "Generate Link"}
-                </Button>
-              </DialogFooter>
-            </div>
-          ) : (
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label>Invite Link</Label>
-                <div className="flex gap-2">
-                  <Input
-                    readOnly
-                    value={generatedLink}
-                    className="text-xs"
-                    onFocus={(e) => e.target.select()}
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleCopy}
-                    className="shrink-0"
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-emerald-500" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Share this link with the person you'd like to invite. They'll be added as a{" "}
-                  <span className="font-medium">{roleLabelMap[inviteRole] ?? inviteRole}</span>.
-                </p>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={handleClose}>
-                  Done
-                </Button>
-              </DialogFooter>
-            </div>
-          )}
+          <div className="py-2">{formContent}</div>
         </DialogContent>
       </Dialog>
       <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} feature="Team invites" />

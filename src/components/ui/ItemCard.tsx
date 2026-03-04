@@ -26,7 +26,7 @@ export function ItemCardRead({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 py-3 px-1 group",
+        "flex items-start gap-2.5 py-2.5 px-1 group",
         onClick && "cursor-pointer",
         className
       )}
@@ -71,7 +71,7 @@ export function MetaBadge({
   return (
     <Comp
       className={cn(
-        "inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded",
+        "inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded",
         variant === "default" && "caption bg-muted/80",
         variant === "blue" &&
           "text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-950/50 cursor-pointer transition-colors",
@@ -106,7 +106,7 @@ export function ItemCardEdit({
   return (
     <div
       className={cn(
-        "mb-2 rounded-lg border border-border bg-card px-4 py-3 space-y-2",
+        "mb-1.5 rounded-lg border border-border bg-card px-3 py-2.5 space-y-2",
         className
       )}
     >
@@ -117,14 +117,14 @@ export function ItemCardEdit({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs"
+            className="h-8 text-xs"
             onClick={onCancel}
           >
             Cancel
           </Button>
           <Button
             size="sm"
-            className="h-7 text-xs"
+            className="h-8 text-xs"
             onClick={onSave}
             disabled={saveDisabled}
           >

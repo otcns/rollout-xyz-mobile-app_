@@ -225,16 +225,16 @@ export function TimelinesTab({ artistId }: TimelinesTabProps) {
   }
 
   return (
-    <div className="mt-4 space-y-2">
+    <div className="space-y-2">
       {/* Top bar */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 text-xs font-medium">
+      <div className="flex items-center justify-between mb-2 gap-2">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-0 border border-border rounded-lg overflow-hidden shrink-0">
             <button
               onClick={() => setView("list")}
               className={cn(
-                "px-2.5 py-1 rounded-md transition-colors",
-                view === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+                "px-3 py-1.5 text-xs font-medium transition-colors",
+                view === "list" ? "bg-foreground text-background" : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
             >
               List
@@ -242,21 +242,21 @@ export function TimelinesTab({ artistId }: TimelinesTabProps) {
             <button
               onClick={() => setView("chart")}
               className={cn(
-                "px-2.5 py-1 rounded-md transition-colors",
-                view === "chart" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+                "px-3 py-1.5 text-xs font-medium transition-colors",
+                view === "chart" ? "bg-foreground text-background" : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
             >
               Calendar
             </button>
           </div>
           {archivedTimelines.length > 0 && (
-            <label className="flex items-center gap-2 cursor-pointer caption text-muted-foreground hover:text-foreground transition-colors">
+            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground hover:text-foreground transition-colors">
               <Checkbox checked={showArchived} onCheckedChange={(v) => setShowArchived(!!v)} />
               Archived ({archivedTimelines.length})
             </label>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <ShareTimelineButton artist={artist} />
         </div>
       </div>
@@ -376,19 +376,17 @@ function EmptyTimelinesState({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center py-20 gap-6 text-center">
-      <p className="text-muted-foreground text-lg">No timelines or milestones yet</p>
-      <div className="flex items-center gap-3">
-        <Button variant="default" size="lg" className="gap-2 text-base" onClick={() => { setMode("timeline"); setTimeout(() => inputRef.current?.focus(), 50); }}>
-          <FolderPlus className="h-5 w-5" /> New Timeline
+    <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
+      <p className="text-sm text-muted-foreground">No timelines or milestones yet</p>
+      <div className="flex items-center gap-2.5">
+        <Button variant="default" className="gap-2 h-9 text-sm px-4" onClick={() => { setMode("timeline"); setTimeout(() => inputRef.current?.focus(), 50); }}>
+          <FolderPlus className="h-4 w-4" /> New Timeline
         </Button>
-        <Button variant="outline" size="lg" className="gap-2 text-base" onClick={() => setMode("milestone")}>
-          <ListPlus className="h-5 w-5" /> New Milestone
+        <Button variant="outline" className="gap-2 h-9 text-sm px-4" onClick={() => setMode("milestone")}>
+          <ListPlus className="h-4 w-4" /> New Milestone
         </Button>
       </div>
-      <div className="mt-2">
-        <ShareTimelineButton artist={artist} />
-      </div>
+      <ShareTimelineButton artist={artist} />
     </div>
   );
 }
@@ -438,7 +436,7 @@ function CalendarView({ milestones }: { milestones: any[] }) {
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <div className="mt-4 rounded-lg border border-border overflow-hidden">
+    <div className="rounded-lg border border-border overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b border-border">
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="h-4 w-4" /></Button>
         <h3 className="text-sm font-semibold">{format(currentMonth, "MMMM yyyy")}</h3>
@@ -851,12 +849,17 @@ function ShareTimelineButton({ artist }: { artist: any }) {
   return (
     <div className="flex items-center gap-1">
       {isPublic && (
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyLink}>
-          {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={copyLink}>
+          {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
         </Button>
       )}
-      <Button variant="outline" size="sm" className="gap-1.5" onClick={() => toggleShare.mutate()}>
-        <Share2 className="h-4 w-4" />
+      <Button
+        variant="outline"
+        size="sm"
+        className="gap-1.5 h-7 px-2.5 text-xs"
+        onClick={() => toggleShare.mutate()}
+      >
+        <Share2 className="h-3.5 w-3.5" />
         {isPublic ? "Sharing On" : "Share Timeline"}
       </Button>
     </div>

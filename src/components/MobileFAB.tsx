@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Plus, X, UserPlus, ListTodo, FolderPlus } from "lucide-react";
+import { Plus, UserPlus, ListTodo, FolderPlus, SquarePen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AnimatePresence, motion } from "framer-motion";
@@ -18,9 +18,6 @@ interface MobileFABProps {
 const defaultActionsByRoute: Record<string, { label: string; icon: React.ElementType; key: string }[]> = {
   "/roster": [
     { label: "Add Artist", icon: UserPlus, key: "add-artist" },
-  ],
-  "/my-work": [
-    { label: "Add Task", icon: ListTodo, key: "add-task" },
   ],
   "/tasks": [
     { label: "Add Task", icon: ListTodo, key: "add-task" },
@@ -45,9 +42,16 @@ export function MobileFAB({ onAction }: { onAction?: (key: string) => void }) {
   if (!isMobile) return null;
 
   const isArtistDetail = location.pathname.startsWith("/roster/") && location.pathname !== "/roster";
+  const isMyWork = location.pathname === "/my-work";
+  const isNotesTab = isMyWork && new URLSearchParams(location.search).get("tab") === "notes";
+
   const routeActions = isArtistDetail
     ? artistDetailActions
-    : defaultActionsByRoute[location.pathname] || [];
+    : isMyWork
+      ? isNotesTab
+        ? [{ label: "New Note", icon: SquarePen, key: "add-note" }]
+        : [{ label: "Add Task", icon: ListTodo, key: "add-task" }]
+      : defaultActionsByRoute[location.pathname] || [];
 
   if (routeActions.length === 0) return null;
 
@@ -56,12 +60,12 @@ export function MobileFAB({ onAction }: { onAction?: (key: string) => void }) {
     onAction?.(key);
   };
 
-  // Single action — just trigger directly
+  // Single action — just trigger directly (centered over bottom nav bar)
   if (routeActions.length === 1) {
     return (
       <button
         onClick={() => handleAction(routeActions[0].key)}
-        className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom)+8px)] left-1/2 -translate-x-1/2 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-foreground text-background shadow-lg active:scale-95 transition-transform"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom)+8px)] left-1/2 -translate-x-1/2 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-foreground text-background shadow-lg active:scale-95 transition-transform"
       >
         <Plus className="h-6 w-6" />
       </button>
@@ -93,8 +97,8 @@ export function MobileFAB({ onAction }: { onAction?: (key: string) => void }) {
             exit={{ opacity: 0, y: 20, scale: 0.8 }}
             transition={{ delay: index * 0.05 }}
             onClick={() => handleAction(action.key)}
-            className="fixed left-1/2 -translate-x-1/2 z-50 flex items-center gap-3"
-            style={{ bottom: `calc(3.5rem + env(safe-area-inset-bottom) + ${76 + index * 56}px)` }}
+            className="fixed left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3"
+            style={{ bottom: `calc(3.5rem + env(safe-area-inset-bottom) + ${20 + index * 56}px)` }}
           >
             <span className="rounded-lg bg-card px-3 py-1.5 text-sm font-medium shadow-md border border-border">
               {action.label}
@@ -106,11 +110,11 @@ export function MobileFAB({ onAction }: { onAction?: (key: string) => void }) {
         ))}
       </AnimatePresence>
 
-      {/* Main FAB */}
+      {/* Main FAB — centered over bottom nav bar */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom)+8px)] left-1/2 -translate-x-1/2 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg active:scale-95 transition-all",
+          "fixed bottom-[env(safe-area-inset-bottom)] left-1/2 -translate-x-1/2 z-[60] flex h-14 w-14 items-center justify-center rounded-full shadow-lg active:scale-95 transition-all",
           isOpen
             ? "bg-muted text-foreground rotate-45"
             : "bg-foreground text-background"

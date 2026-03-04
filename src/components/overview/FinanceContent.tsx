@@ -277,19 +277,19 @@ export function FinanceContent() {
   return (
     <div className="space-y-6">
       {/* Header + Date Filter */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-foreground">Finance</h1>
           <p className="text-sm text-muted-foreground mt-1">Company-wide financial overview</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1 rounded-lg border border-border p-0.5">
             {(["month", "quarter", "ytd", "all"] as DateRange[]).map((r) => (
               <button
                 key={r}
                 onClick={() => setDateRange(r)}
                 className={cn(
-                  "px-3 py-1 rounded-md text-xs font-medium transition-colors capitalize",
+                  "px-2.5 sm:px-3 py-1 rounded-md text-xs font-medium transition-colors capitalize",
                   dateRange === r ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
                 )}
               >
@@ -297,8 +297,10 @@ export function FinanceContent() {
               </button>
             ))}
           </div>
-          <Button variant="outline" size="sm" onClick={exportCSV}>
-            <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
+          <Button variant="outline" size="sm" onClick={exportCSV} className="h-8">
+            <Download className="h-3.5 w-3.5 mr-1.5" />
+            <span className="hidden xs:inline">Export CSV</span>
+            <span className="xs:hidden">CSV</span>
           </Button>
         </div>
       </div>
@@ -330,7 +332,47 @@ export function FinanceContent() {
       {/* Staff Payroll */}
       <CollapsibleSection title="Staff Payroll" defaultOpen>
         <div className="rounded-xl border border-border overflow-hidden">
-          <table className="w-full text-sm">
+          {/* Mobile card layout */}
+          <div className="sm:hidden divide-y divide-border">
+            {staffEmployment.map((emp: any) => {
+              const profile = staffProfiles.find((p) => p.id === emp.user_id);
+              const displayName = profile?.full_name || emp.display_name || "Unknown";
+              const monthly = emp.employment_type === "w2"
+                ? Number(emp.annual_salary || 0) / 12
+                : Number(emp.monthly_retainer || 0);
+              return (
+                <div key={emp.id} className="flex items-center gap-3 px-4 py-3">
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarImage src={profile?.avatar_url ?? undefined} />
+                    <AvatarFallback className="text-[10px]">{displayName[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium truncate">{displayName}</span>
+                      <Badge variant="outline" className="text-[10px] shrink-0">{emp.employment_type === "w2" ? "W-2" : "1099"}</Badge>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {emp.employment_type === "w2" ? `${fmt(Number(emp.annual_salary || 0))}/yr` : `${fmt(Number(emp.monthly_retainer || 0))}/mo`}
+                    </span>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-sm font-semibold">{fmt(monthly)}</span>
+                    <span className="text-xs text-muted-foreground">/mo</span>
+                  </div>
+                </div>
+              );
+            })}
+            {staffEmployment.length === 0 && (
+              <div className="p-6 text-center text-sm text-muted-foreground">No staff employment records</div>
+            )}
+            <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-t border-border">
+              <span className="text-sm font-semibold">Total Monthly Payroll</span>
+              <span className="text-sm font-bold">{fmt(totalPayroll)}</span>
+            </div>
+          </div>
+
+          {/* Desktop table layout */}
+          <table className="hidden sm:table w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
                 <th className="text-left p-3 font-medium">Name</th>
@@ -396,9 +438,9 @@ export function FinanceContent() {
                       {artist.pendingCount} pending
                     </Badge>
                   )}
-                  <div className="ml-auto flex items-center gap-4 text-xs text-muted-foreground mr-2">
-                    <span>Budget: {fmt(artist.budget)}</span>
-                    <span className="text-emerald-600">Rev: {fmt(artist.revenue)}</span>
+                  <div className="ml-auto flex items-center gap-2 sm:gap-4 text-xs text-muted-foreground mr-2">
+                    <span className="hidden sm:inline">Budget: {fmt(artist.budget)}</span>
+                    <span className="hidden sm:inline text-emerald-600">Rev: {fmt(artist.revenue)}</span>
                     <span className="text-destructive">Exp: {fmt(artist.expenses)}</span>
                   </div>
                 </div>
@@ -427,7 +469,52 @@ export function FinanceContent() {
 
                 {/* Transactions ledger */}
                 <div className="rounded-lg border border-border overflow-hidden">
-                  <table className="w-full text-xs">
+                  {/* Mobile card layout */}
+                  <div className="sm:hidden divide-y divide-border">
+                    {artist.transactions.map((t: any) => (
+                      <div key={t.id} className="flex items-start gap-3 px-3 py-2.5 hover:bg-accent/20 transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-medium truncate">{t.description}</span>
+                            <Badge variant="outline" className={cn("text-[10px] shrink-0",
+                              (t as any).approval_status === "pending" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                              (t as any).approval_status === "denied" ? "bg-red-50 text-red-700 border-red-200" :
+                              "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            )}>
+                              {(t as any).approval_status || "approved"}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] text-muted-foreground">{format(parseLocalDate(t.transaction_date), "MMM d, yyyy")}</span>
+                            <Badge variant={t.type === "revenue" ? "default" : "outline"} className={cn("text-[10px]", t.type === "revenue" ? "bg-emerald-100 text-emerald-800" : "")}>
+                              {t.type}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+                          <span className={cn("text-xs font-semibold", t.type === "revenue" ? "text-emerald-600" : "text-destructive")}>
+                            {t.type === "revenue" ? "+" : "-"}{fmt(Math.abs(Number(t.amount)))}
+                          </span>
+                          {canEdit && (t as any).approval_status === "pending" && (
+                            <>
+                              <button onClick={() => approveTransaction.mutate({ id: t.id, status: "approved" })} className="p-1 rounded hover:bg-emerald-100 text-emerald-600">
+                                <Check className="h-3.5 w-3.5" />
+                              </button>
+                              <button onClick={() => approveTransaction.mutate({ id: t.id, status: "denied" })} className="p-1 rounded hover:bg-red-100 text-red-600">
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {artist.transactions.length === 0 && (
+                      <div className="p-4 text-center text-xs text-muted-foreground">No transactions</div>
+                    )}
+                  </div>
+
+                  {/* Desktop table layout */}
+                  <table className="hidden sm:table w-full text-xs">
                     <thead>
                       <tr className="border-b border-border bg-muted/30">
                         <th className="text-left p-2 font-medium">Date</th>
@@ -464,16 +551,10 @@ export function FinanceContent() {
                             <td className="p-2 text-center">
                               {(t as any).approval_status === "pending" && (
                                 <div className="flex items-center justify-center gap-1">
-                                  <button
-                                    onClick={() => approveTransaction.mutate({ id: t.id, status: "approved" })}
-                                    className="p-1 rounded hover:bg-emerald-100 text-emerald-600"
-                                  >
+                                  <button onClick={() => approveTransaction.mutate({ id: t.id, status: "approved" })} className="p-1 rounded hover:bg-emerald-100 text-emerald-600">
                                     <Check className="h-3.5 w-3.5" />
                                   </button>
-                                  <button
-                                    onClick={() => approveTransaction.mutate({ id: t.id, status: "denied" })}
-                                    className="p-1 rounded hover:bg-red-100 text-red-600"
-                                  >
+                                  <button onClick={() => approveTransaction.mutate({ id: t.id, status: "denied" })} className="p-1 rounded hover:bg-red-100 text-red-600">
                                     <X className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
@@ -583,7 +664,37 @@ function CompanyExpensesTable({ expenses, categories, teamId, canEdit }: { expen
 
   return (
     <div className="rounded-xl border border-border overflow-hidden">
-      <table className="w-full text-sm">
+      {/* Mobile card layout */}
+      <div className="sm:hidden divide-y divide-border">
+        {expenses.map((e: any) => {
+          const cat = categories.find((c: any) => c.id === e.category_id);
+          return (
+            <div key={e.id} className="flex items-start gap-3 px-4 py-3 hover:bg-accent/20 transition-colors">
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium leading-tight block">{e.description}</span>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <span className="text-xs text-muted-foreground">{format(parseLocalDate(e.expense_date), "MMM d, yyyy")}</span>
+                  {cat && <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{cat.name}</span>}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 pt-0.5">
+                <span className="text-sm font-semibold text-destructive">{fmt(Number(e.amount))}</span>
+                {canEdit && (
+                  <button onClick={() => deleteExpense.mutate(e.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        {expenses.length === 0 && (
+          <div className="p-6 text-center text-sm text-muted-foreground">No company expenses</div>
+        )}
+      </div>
+
+      {/* Desktop table layout */}
+      <table className="hidden sm:table w-full text-sm">
         <thead>
           <tr className="border-b border-border bg-muted/30">
             <th className="text-left p-3 font-medium">Date</th>
@@ -617,33 +728,47 @@ function CompanyExpensesTable({ expenses, categories, teamId, canEdit }: { expen
           )}
         </tbody>
       </table>
+
       {canEdit && (
-        <div className="flex items-center gap-2 p-3 border-t border-border bg-muted/10">
-          <Input
-            value={newDesc}
-            onChange={(e) => setNewDesc(e.target.value)}
-            placeholder="Description"
-            className="h-8 text-sm flex-1"
-          />
-          <CurrencyInput
-            value={newAmount}
-            onChange={setNewAmount}
-            placeholder="0"
-            className="h-8 text-sm w-32"
-          />
-          <Select value={newCat} onValueChange={setNewCat}>
-            <SelectTrigger className="h-8 text-xs w-36">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((c: any) => (
-                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button size="sm" onClick={() => addExpense.mutate()} disabled={!newDesc.trim() || !newAmount}>
-            <Plus className="h-3.5 w-3.5" />
-          </Button>
+        <div className="border-t border-border bg-muted/10 p-3">
+          {/* Mobile: stacked form */}
+          <div className="flex flex-col gap-2 sm:hidden">
+            <Input value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="Description" className="h-9 text-sm" />
+            <div className="flex gap-2">
+              <CurrencyInput value={newAmount} onChange={setNewAmount} placeholder="0.00" className="h-9 text-sm flex-1" />
+              <Select value={newCat} onValueChange={setNewCat}>
+                <SelectTrigger className="h-9 text-xs flex-1">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button size="sm" className="w-full h-9" onClick={() => addExpense.mutate()} disabled={!newDesc.trim() || !newAmount}>
+              <Plus className="h-3.5 w-3.5 mr-1.5" /> Add Expense
+            </Button>
+          </div>
+          {/* Desktop: inline row */}
+          <div className="hidden sm:flex items-center gap-2">
+            <Input value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="Description" className="h-8 text-sm flex-1" />
+            <CurrencyInput value={newAmount} onChange={setNewAmount} placeholder="0" className="h-8 text-sm w-32" />
+            <Select value={newCat} onValueChange={setNewCat}>
+              <SelectTrigger className="h-8 text-xs w-36">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((c: any) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button size="sm" onClick={() => addExpense.mutate()} disabled={!newDesc.trim() || !newAmount}>
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       )}
     </div>

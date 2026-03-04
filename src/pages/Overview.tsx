@@ -447,12 +447,12 @@ export default function Overview() {
       ) : (
       <>
       {/* Company tabs */}
-      <div className="flex items-center gap-1 mb-5">
+      <div className="flex items-center gap-1 mb-3 sm:mb-5">
         {(["dashboard", "agenda", "staff", "finance"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => handleCompanyTab(tab)}
-            className={cn("px-4 py-1.5 rounded-full text-sm font-medium transition-colors capitalize",
+            className={cn("px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors capitalize",
               companyTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
             )}
           >

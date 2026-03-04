@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { ItemEditor } from "@/components/ui/ItemEditor";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
@@ -26,6 +26,8 @@ interface WorkItemCreatorProps {
   variant?: "inline" | "card";
   /** Metadata pills to render below input */
   metadataPills?: React.ReactNode;
+  /** Ref that will be set to a function which focuses the input */
+  focusRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 export function WorkItemCreator({
@@ -35,8 +37,18 @@ export function WorkItemCreator({
   triggers,
   variant = "card",
   metadataPills,
+  focusRef,
 }: WorkItemCreatorProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [title, setTitle] = useState("");
+
+  useEffect(() => {
+    if (focusRef) {
+      focusRef.current = () => {
+        containerRef.current?.querySelector("input")?.focus();
+      };
+    }
+  }, [focusRef]);
   const [description, setDescription] = useState("");
   const [parsedDate, setParsedDate] = useState<Date | null>(null);
   const [showDescription, setShowDescription] = useState(false);
@@ -60,7 +72,7 @@ export function WorkItemCreator({
 
   if (variant === "inline") {
     return (
-      <div className="flex items-center gap-2 py-2">
+      <div ref={containerRef} className="flex items-center gap-2 py-2">
         <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
         <ItemEditor
           value={title}

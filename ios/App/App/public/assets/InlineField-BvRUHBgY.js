@@ -1,0 +1,6 @@
+import{c as y,r as c,j as m}from"./index-f30EzvEF.js";import{R as E}from"./RichTextEditor-CHo2xXOv.js";/**
+ * @license lucide-react v0.462.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const k=y("Archive",[["rect",{width:"20",height:"5",x:"2",y:"3",rx:"1",key:"1wp1u1"}],["path",{d:"M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8",key:"1s80jp"}],["path",{d:"M10 12h4",key:"a56b0p"}]]);function w({value:r,onSave:i,placeholder:u="Enter value",className:l="",inputClassName:f="",as:p="input",prefix:o}){const[n,a]=c.useState(r),s=c.useRef(null);c.useEffect(()=>{a(r)},[r]);const h=()=>{n.trim()!==r&&i(n.trim())},x=t=>{var e,d;t.key==="Enter"&&p==="input"&&(t.preventDefault(),h(),(e=s.current)==null||e.blur()),t.key==="Escape"&&(a(r),(d=s.current)==null||d.blur())};if(p==="textarea")return m.jsx(E,{value:n,onChange:t=>a(t),onBlur:t=>{const e=t.trim();e!==r&&i(e)},placeholder:u,className:`${f} ${l}`});const g={ref:s,value:o?`${o}${n}`:n,onChange:t=>{const e=o?t.target.value.replace(o,""):t.target.value;a(e)},onBlur:h,onKeyDown:x,placeholder:u,className:`w-full bg-transparent outline-none text-foreground py-1 px-0 focus:ring-0 transition-colors placeholder:text-muted-foreground/50 ${f} ${l}`};return m.jsx("input",{...g})}export{k as A,w as I};

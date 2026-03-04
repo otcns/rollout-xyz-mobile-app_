@@ -33,22 +33,22 @@ export function CollapsibleSection({
   return (
     <div className={cn("", className)}>
       {/* Section header */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-muted/30 rounded-t-lg border-b border-border/30">
+      <div className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-muted/30 rounded-t-lg border-b border-border/30">
         <button
           onClick={toggle}
-          className="flex items-center gap-2.5 flex-1 min-w-0 text-left"
+          className="flex items-center gap-2 flex-1 min-w-0 text-left"
         >
           <ChevronDown
             className={cn(
-              "h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200",
+              "h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200",
               !isOpen && "-rotate-90"
             )}
           />
           {titleSlot ?? (
-            <span className="text-base font-bold truncate text-foreground">{title}</span>
+            <span className="text-sm font-bold truncate text-foreground">{title}</span>
           )}
           {count != null && (
-            <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full shrink-0">
+            <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full shrink-0">
               {count}
             </span>
           )}
@@ -62,7 +62,7 @@ export function CollapsibleSection({
 
       {/* Content */}
       {isOpen && (
-        <div className="px-4 pr-2 pt-1 pb-2">{children}</div>
+        <div className="px-3 pr-1.5 sm:px-4 sm:pr-2 pt-1 pb-2">{children}</div>
       )}
     </div>
   );
@@ -80,11 +80,11 @@ export function InlineAddTrigger({ label, onClick, className }: InlineAddTrigger
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2.5 pl-2",
+        "flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2 pl-1.5 sm:pl-2",
         className
       )}
     >
-      <span className="text-lg leading-none">+</span> {label}
+      <span className="text-base leading-none">+</span> {label}
     </button>
   );
 }
@@ -97,7 +97,7 @@ interface ListItemRowProps {
 
 export function ListItemRow({ children, className }: ListItemRowProps) {
   return (
-    <div className={cn("flex items-start gap-3 py-3 px-1 group", className)}>
+    <div className={cn("flex items-start gap-2.5 py-2.5 px-1 group", className)}>
       {children}
     </div>
   );
