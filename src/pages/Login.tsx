@@ -214,23 +214,17 @@ export default function Login() {
       </div>
 
       {/* Right panel – waving flag video */}
-      <div className="hidden lg:flex flex-1 items-center justify-center bg-[hsl(0,0%,8%)] relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 items-center justify-center bg-[hsl(0,0%,5%)] relative overflow-hidden">
         <video
           autoPlay
           loop
           muted
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
-          poster=""
         >
+          <source src="/flag-waving.mp4" type="video/mp4" />
           <source src="/flag-waving.mov" type="video/quicktime" />
         </video>
-        {/* Fallback for browsers that don't support .mov */}
-        <img
-          src={rolloutFlag}
-          alt="Rollout flag"
-          className="absolute inset-0 w-1/2 h-1/2 m-auto object-contain opacity-0 [video:not([playing])~&]:opacity-100"
-        />
       </div>
     </div>
   );
