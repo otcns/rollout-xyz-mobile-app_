@@ -7,24 +7,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ChevronRight } from "lucide-react";
 import rolloutLogo from "@/assets/rollout-logo.png";
+import rolloutFlag from "@/assets/rollout-flag.svg";
 
-const testimonials = [
-  {
-    quote: "I feel like every small label needs to be using this.",
-    name: "Kei Henderson",
-    role: "Third & Hayden",
-  },
-  {
-    quote: "Thank you for taking the initiative to create this. It is truly something that is really needed.",
-    name: "Mace",
-    role: "Artist Manager",
-  },
-  {
-    quote: "Having the Rollout app and using it makes me think about the projects I'm working on differently.",
-    name: "Raney Antoine Jr.",
-    role: "Musician, Producer\n& Professor of Hip-Hop and R&B",
-  },
-];
 
 export default function Login() {
   const [searchParams] = useSearchParams();
@@ -229,28 +213,24 @@ export default function Login() {
         )}
       </div>
 
-      {/* Right panel – testimonials */}
-      <div className="hidden lg:flex flex-1 flex-col justify-center gap-5 bg-[hsl(0,0%,22%)] px-12 xl:px-20 py-12 relative overflow-hidden">
-        {/* Subtle light sweep */}
-        <div className="absolute top-0 right-0 w-[500px] h-[300px] bg-gradient-to-bl from-white/5 to-transparent rounded-full blur-3xl pointer-events-none" />
-
-        {testimonials.map((t, i) => (
-          <div
-            key={i}
-            className="relative flex items-center gap-5 rounded-2xl bg-[hsl(0,0%,18%)] border border-[hsl(0,0%,28%)] p-6"
-          >
-            {/* Avatar placeholder */}
-            <div className="h-20 w-20 shrink-0 rounded-full bg-[hsl(0,0%,30%)]" />
-
-            <div className="flex-1 min-w-0">
-              <p className="text-[hsl(40,30%,90%)] text-base leading-relaxed mb-3">
-                {t.quote}
-              </p>
-              <p className="text-sm font-semibold text-[hsl(40,30%,92%)]">{t.name}</p>
-              <p className="text-xs text-[hsl(0,0%,55%)] whitespace-pre-line">{t.role}</p>
-            </div>
-          </div>
-        ))}
+      {/* Right panel – waving flag video */}
+      <div className="hidden lg:flex flex-1 items-center justify-center bg-[hsl(0,0%,8%)] relative overflow-hidden">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          poster=""
+        >
+          <source src="/flag-waving.mov" type="video/quicktime" />
+        </video>
+        {/* Fallback for browsers that don't support .mov */}
+        <img
+          src={rolloutFlag}
+          alt="Rollout flag"
+          className="absolute inset-0 w-1/2 h-1/2 m-auto object-contain opacity-0 [video:not([playing])~&]:opacity-100"
+        />
       </div>
     </div>
   );
