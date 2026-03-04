@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,16 +7,16 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format, isToday, isTomorrow, isPast, isYesterday } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { Plus, Music2, Wallet } from "lucide-react";
+import { Plus, Music2, Wallet, ChevronDown, ChevronRight } from "lucide-react";
 import { cn, formatLocalDate } from "@/lib/utils";
 import { PullToRefresh } from "@/components/PullToRefresh";
-import { useCallback, useState, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { ItemEditor } from "@/components/ui/ItemEditor";
 import { useArtists } from "@/hooks/useArtists";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotesPanel } from "@/components/notes/NotesPanel";
 import { useNotes } from "@/hooks/useNotes";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import {
   Select,
   SelectContent,
@@ -39,6 +39,7 @@ export default function MyWork() {
   const [budgetId, setBudgetId] = useState<string | null>(null);
   const [filterArtistId, setFilterArtistId] = useState<string>("all");
   const [parsedDate, setParsedDate] = useState<Date | null>(null);
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   const { data: artists = [] } = useArtists(teamId);
 
@@ -73,7 +74,6 @@ export default function MyWork() {
     enabled: !!user?.id,
   });
 
-  // ── Tasks ──
   const toggleComplete = useMutation({
     mutationFn: async (taskId: string) => {
       const { error } = await supabase
@@ -83,6 +83,23 @@ export default function MyWork() {
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-work"] }),
+  });
+
+  const updateDescription = useMutation({
+    mutationFn: async ({ id, description }: { id: string; description: string }) => {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ description })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, description }) => {
+      await queryClient.cancelQueries({ queryKey: ["my-work"] });
+      queryClient.setQueriesData<any[]>({ queryKey: ["my-work"] }, (old) =>
+        old?.map((t) => (t.id === id ? { ...t, description } : t)) ?? []
+      );
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["my-work"] }),
   });
 
   const createTask = useMutation({
@@ -213,8 +230,8 @@ export default function MyWork() {
 
   return (
     <AppLayout title="My Work">
-      <div className={cn("mx-auto pb-20", tab === "notes" ? "max-w-4xl" : "max-w-2xl")}>
-        {/* Header row: title + tab toggle + filter */}
+      <div className="mx-auto max-w-2xl pb-20">
+        {/* Header row */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <h1 className="text-foreground text-lg font-bold">My Work</h1>
@@ -307,53 +324,76 @@ export default function MyWork() {
                 </div>
               ) : (
                 <ul className="divide-y divide-border">
-                  {tasks.map((task) => (
-                    <li key={task.id} className="flex items-center gap-2.5 py-2.5 group">
-                      <Checkbox
-                        checked={false}
-                        onCheckedChange={() => toggleComplete.mutate(task.id)}
-                        className="shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground leading-snug">{task.title}</p>
-                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap text-xs text-muted-foreground">
+                  {tasks.map((task) => {
+                    const isExpanded = expandedTaskId === task.id;
+                    return (
+                      <li key={task.id} className="py-1">
+                        <div className="flex items-center gap-2.5 py-1.5 group">
+                          <Checkbox
+                            checked={false}
+                            onCheckedChange={() => toggleComplete.mutate(task.id)}
+                            className="shrink-0"
+                          />
+                          <button
+                            onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
+                            className="shrink-0 p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                          </button>
+                          <div
+                            className="flex-1 min-w-0 cursor-pointer"
+                            onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
+                          >
+                            <p className="text-sm text-foreground leading-snug">{task.title}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap text-xs text-muted-foreground">
+                              {task.artists && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/roster/${task.artists.id}`); }}
+                                  className="hover:text-foreground transition-colors"
+                                >
+                                  {task.artists.name}
+                                </button>
+                              )}
+                              {task.initiatives && (
+                                <span>{task.artists ? "· " : ""}{task.initiatives.name}</span>
+                              )}
+                              {task.due_date && (
+                                <span className={isDueOverdue(task.due_date) ? "text-destructive" : ""}>
+                                  {task.artists || task.initiatives ? "· " : ""}{formatDue(task.due_date)}
+                                </span>
+                              )}
+                              {task.expense_amount != null && task.expense_amount > 0 && (
+                                <span>· ${task.expense_amount.toLocaleString()}</span>
+                              )}
+                            </div>
+                          </div>
                           {task.artists && (
-                            <button
+                            <Avatar
+                              className="h-6 w-6 shrink-0 cursor-pointer"
                               onClick={() => navigate(`/roster/${task.artists.id}`)}
-                              className="hover:text-foreground transition-colors"
                             >
-                              {task.artists.name}
-                            </button>
-                          )}
-                          {task.initiatives && (
-                            <span>{task.artists ? "· " : ""}{task.initiatives.name}</span>
-                          )}
-                          {task.due_date && (
-                            <span className={isDueOverdue(task.due_date) ? "text-destructive" : ""}>
-                              {task.artists || task.initiatives ? "· " : ""}{formatDue(task.due_date)}
-                            </span>
-                          )}
-                          {task.expense_amount != null && task.expense_amount > 0 && (
-                            <span>· ${task.expense_amount.toLocaleString()}</span>
+                              {task.artists.avatar_url && <AvatarImage src={task.artists.avatar_url} alt={task.artists.name} />}
+                              <AvatarFallback className="text-[9px] font-bold bg-muted">{task.artists.name?.[0]}</AvatarFallback>
+                            </Avatar>
                           )}
                         </div>
-                      </div>
-                      {task.artists && (
-                        <Avatar
-                          className="h-6 w-6 shrink-0 cursor-pointer"
-                          onClick={() => navigate(`/roster/${task.artists.id}`)}
-                        >
-                          {task.artists.avatar_url && <AvatarImage src={task.artists.avatar_url} alt={task.artists.name} />}
-                          <AvatarFallback className="text-[9px] font-bold bg-muted">{task.artists.name?.[0]}</AvatarFallback>
-                        </Avatar>
-                      )}
-                    </li>
-                  ))}
+                        {isExpanded && (
+                          <div className="ml-[52px] pb-2">
+                            <RichTextEditor
+                              value={task.description || ""}
+                              onBlur={(val) => updateDescription.mutate({ id: task.id, description: val })}
+                              placeholder="Add notes…"
+                              className="min-h-[80px] text-sm"
+                            />
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </>
           ) : (
-            /* ── Notes tab ── */
             <NotesPanel />
           )}
         </PullToRefresh>

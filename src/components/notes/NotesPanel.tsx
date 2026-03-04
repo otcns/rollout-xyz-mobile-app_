@@ -16,10 +16,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useEditor, EditorContent, Extension } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TiptapUnderline from "@tiptap/extension-underline";
@@ -27,7 +25,6 @@ import Placeholder from "@tiptap/extension-placeholder";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 
-// Custom extension to remap Cmd+S to strikethrough and stop propagation on formatting shortcuts
 const StrikethroughShortcut = Extension.create({
   name: "strikethroughShortcut",
   addKeyboardShortcuts() {
@@ -40,7 +37,6 @@ const StrikethroughShortcut = Extension.create({
   },
 });
 
-// Wrapper to stop propagation of formatting shortcuts so they don't collapse the sidebar
 const editorKeyDownHandler = (e: React.KeyboardEvent) => {
   if ((e.metaKey || e.ctrlKey) && ["b", "i", "u", "s"].includes(e.key.toLowerCase())) {
     e.stopPropagation();
@@ -49,7 +45,6 @@ const editorKeyDownHandler = (e: React.KeyboardEvent) => {
 
 export function NotesPanel() {
   const { user } = useAuth();
-  const isMobile = useIsMobile();
   const { data: notes = [], isLoading } = useNotes();
   const createNote = useCreateNote();
   const updateNote = useUpdateNote();
@@ -62,13 +57,6 @@ export function NotesPanel() {
 
   const selectedNote = useMemo(() => notes.find((n) => n.id === selectedId), [notes, selectedId]);
   const isOwner = selectedNote?.user_id === user?.id;
-
-  // Auto-select first note when notes load and none is selected
-  useEffect(() => {
-    if (!selectedId && notes.length > 0 && !isLoading) {
-      setSelectedId(notes[0].id);
-    }
-  }, [notes, selectedId, isLoading]);
 
   const handleCreate = async () => {
     const result = await createNote.mutateAsync("");
@@ -117,8 +105,8 @@ export function NotesPanel() {
   const unpinnedNotes = notes.filter((n) => !n.is_pinned);
   const shareCount = selectedNote?.note_shares?.length || 0;
 
-  // On mobile, show either list or detail
-  if (isMobile && selectedId && selectedNote) {
+  // ── Detail View ──
+  if (selectedId && selectedNote) {
     return (
       <div className="flex flex-col h-full">
         <div className="flex items-center gap-2 py-2 border-b border-border">
@@ -156,103 +144,55 @@ export function NotesPanel() {
     );
   }
 
+  // ── List View ──
   return (
-    <div className="flex h-full gap-0" style={{ minHeight: "60vh" }}>
-      {/* Note list sidebar */}
-      <div className={cn(
-        "border-r border-border overflow-y-auto shrink-0",
-        isMobile ? "w-full" : "w-[240px]"
-      )}>
-        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-          <span className="text-xs font-semibold text-muted-foreground">Notes</span>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCreate}>
-            <SquarePen className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-
-        {isLoading ? (
-          <div className="p-3 text-xs text-muted-foreground">Loading…</div>
-        ) : notes.length === 0 ? (
-          <div className="p-4 text-center">
-            <p className="text-sm text-muted-foreground mb-2">No notes yet</p>
-            <Button size="sm" variant="outline" onClick={handleCreate} className="gap-1">
-              <SquarePen className="h-3 w-3" /> New Note
-            </Button>
-          </div>
-        ) : (
-          <div>
-            {pinnedNotes.length > 0 && (
-              <>
-                <div className="px-3 pt-2 pb-1 flex items-center gap-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                  <Pin className="h-2.5 w-2.5" /> Pinned
-                </div>
-                {pinnedNotes.map((note) => (
-                  <NoteListItem
-                    key={note.id}
-                    note={note}
-                    isSelected={note.id === selectedId}
-                    onClick={() => setSelectedId(note.id)}
-                    isShared={(note.note_shares?.length || 0) > 0}
-                  />
-                ))}
-              </>
-            )}
-            {unpinnedNotes.length > 0 && pinnedNotes.length > 0 && (
-              <div className="px-3 pt-3 pb-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                Recent
-              </div>
-            )}
-            {unpinnedNotes.map((note) => (
-              <NoteListItem
-                key={note.id}
-                note={note}
-                isSelected={note.id === selectedId}
-                onClick={() => setSelectedId(note.id)}
-                isShared={(note.note_shares?.length || 0) > 0}
-              />
-            ))}
-          </div>
-        )}
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between py-2 border-b border-border">
+        <span className="text-xs font-semibold text-muted-foreground">Notes</span>
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCreate}>
+          <SquarePen className="h-3.5 w-3.5" />
+        </Button>
       </div>
 
-      {/* Note detail */}
-      {!isMobile && (
-        <div className="flex-1 flex flex-col min-w-0">
-          {selectedNote ? (
+      {isLoading ? (
+        <div className="p-3 text-xs text-muted-foreground">Loading…</div>
+      ) : notes.length === 0 ? (
+        <div className="p-8 text-center">
+          <p className="text-sm text-muted-foreground mb-2">No notes yet</p>
+          <Button size="sm" variant="outline" onClick={handleCreate} className="gap-1">
+            <SquarePen className="h-3 w-3" /> New Note
+          </Button>
+        </div>
+      ) : (
+        <div>
+          {pinnedNotes.length > 0 && (
             <>
-              <div className="flex items-center justify-end gap-1 px-3 py-1.5 border-b border-border">
-                {isOwner && (
-                  <>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleTogglePin}>
-                      {selectedNote.is_pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
-                    </Button>
-                    <SharePopover
-                      members={members}
-                      currentUserId={user?.id || ""}
-                      sharedWith={selectedNote.note_shares || []}
-                      onToggle={handleShare}
-                    />
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={handleDelete}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </>
-                )}
+              <div className="px-1 pt-3 pb-1 flex items-center gap-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                <Pin className="h-2.5 w-2.5" /> Pinned
               </div>
-              <NoteEditor
-                note={selectedNote}
-                isOwner={isOwner}
-                onTitleBlur={handleTitleBlur}
-                onTitleChange={(v) => selectedId && updateNote.mutate({ id: selectedId, title: v })}
-                onContentChange={handleContentChange}
-                shareCount={shareCount}
-                autoFocus={false}
-              />
+              {pinnedNotes.map((note) => (
+                <NoteListItem
+                  key={note.id}
+                  note={note}
+                  onClick={() => setSelectedId(note.id)}
+                  isShared={(note.note_shares?.length || 0) > 0}
+                />
+              ))}
             </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-              Select a note or create a new one
+          )}
+          {unpinnedNotes.length > 0 && pinnedNotes.length > 0 && (
+            <div className="px-1 pt-3 pb-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+              Recent
             </div>
           )}
+          {unpinnedNotes.map((note) => (
+            <NoteListItem
+              key={note.id}
+              note={note}
+              onClick={() => setSelectedId(note.id)}
+              isShared={(note.note_shares?.length || 0) > 0}
+            />
+          ))}
         </div>
       )}
     </div>
@@ -261,27 +201,26 @@ export function NotesPanel() {
 
 /* ── Note List Item ────────────────────────────────── */
 
-function NoteListItem({ note, isSelected, onClick, isShared }: {
+function NoteListItem({ note, onClick, isShared }: {
   note: any;
-  isSelected: boolean;
   onClick: () => void;
   isShared: boolean;
 }) {
-  const preview = (note.content || "").replace(/<[^>]*>/g, "").slice(0, 60);
+  const preview = (note.content || "").replace(/<[^>]*>/g, "").slice(0, 80);
   return (
     <button
       onClick={onClick}
-      className={cn(
-        "w-full text-left px-3 py-2.5 border-b border-border/50 transition-colors",
-        isSelected ? "bg-accent" : "hover:bg-muted/50"
-      )}
+      className="w-full text-left px-2 py-3 border-b border-border/50 transition-colors hover:bg-muted/50 rounded-md"
     >
       <div className="flex items-start justify-between gap-1">
         <p className="text-sm font-semibold text-foreground truncate">{note.title || "New Note"}</p>
-        {isShared && <Share2 className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />}
+        <div className="flex items-center gap-1 shrink-0">
+          {note.is_pinned && <Pin className="h-2.5 w-2.5 text-muted-foreground" />}
+          {isShared && <Share2 className="h-3 w-3 text-muted-foreground" />}
+        </div>
       </div>
       <div className="flex items-center gap-1.5 mt-0.5">
-        <span className="text-[10px] text-muted-foreground">{format(new Date(note.updated_at), "M/d/yy")}</span>
+        <span className="text-[10px] text-muted-foreground shrink-0">{format(new Date(note.updated_at), "M/d/yy")}</span>
         {preview && <span className="text-[10px] text-muted-foreground truncate">{preview}</span>}
       </div>
     </button>
@@ -337,7 +276,6 @@ function NoteEditor({ note, isOwner, onTitleBlur, onTitleChange, onContentChange
       clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => onContentChange(clean), 600);
 
-      // Auto-title from first 3 words of plain text
       if (autoTitle) {
         const text = e.getText().trim();
         const words = text.split(/\s+/).filter(Boolean).slice(0, 3).join(" ");
@@ -349,19 +287,16 @@ function NoteEditor({ note, isOwner, onTitleBlur, onTitleChange, onContentChange
     },
   }, [note.id]);
 
-  // Sync editable state
   useEffect(() => {
     if (editor) editor.setEditable(isOwner);
   }, [isOwner, editor]);
 
-  // Auto-focus editor on new notes
   useEffect(() => {
     if (editor && autoFocus && !note.content) {
       setTimeout(() => editor.commands.focus("end"), 50);
     }
   }, [editor, note.id]);
 
-  // Focus editor when selecting a note on desktop too
   useEffect(() => {
     if (editor && isOwner) {
       setTimeout(() => editor.commands.focus("end"), 100);
@@ -378,10 +313,8 @@ function NoteEditor({ note, isOwner, onTitleBlur, onTitleChange, onContentChange
 
   return (
     <div className="flex-1 overflow-y-auto flex flex-col">
-      {/* Formatting toolbar */}
       {isOwner && editor && (
         <div className="flex items-center gap-0.5 px-4 sm:px-6 py-1.5 border-b border-border/50">
-          {/* Block type dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs font-medium text-muted-foreground px-2">
@@ -408,7 +341,6 @@ function NoteEditor({ note, isOwner, onTitleBlur, onTitleChange, onContentChange
 
           <div className="w-px h-4 bg-border mx-1" />
 
-          {/* List dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className={cn("h-7 w-7", (editor.isActive("bulletList") || editor.isActive("orderedList") || editor.isActive("taskList")) && "bg-accent")}>
@@ -417,23 +349,19 @@ function NoteEditor({ note, isOwner, onTitleBlur, onTitleChange, onContentChange
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
               <DropdownMenuItem onClick={() => editor.chain().focus().toggleBulletList().run()}>
-                <List className="h-3.5 w-3.5 mr-2" />
-                Bullet List
+                <List className="h-3.5 w-3.5 mr-2" /> Bullet List
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => editor.chain().focus().toggleOrderedList().run()}>
-                <ListOrdered className="h-3.5 w-3.5 mr-2" />
-                Numbered List
+                <ListOrdered className="h-3.5 w-3.5 mr-2" /> Numbered List
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => editor.chain().focus().toggleTaskList().run()}>
-                <ListChecks className="h-3.5 w-3.5 mr-2" />
-                Checklist
+                <ListChecks className="h-3.5 w-3.5 mr-2" /> Checklist
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <div className="w-px h-4 bg-border mx-1" />
 
-          {/* Text effects dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className={cn("h-7 w-7", (editor.isActive("bold") || editor.isActive("italic") || editor.isActive("underline") || editor.isActive("strike")) && "bg-accent")}>
@@ -442,23 +370,19 @@ function NoteEditor({ note, isOwner, onTitleBlur, onTitleChange, onContentChange
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
               <DropdownMenuItem onClick={() => editor.chain().focus().toggleBold().run()}>
-                <Bold className="h-3.5 w-3.5 mr-2" />
-                Bold
+                <Bold className="h-3.5 w-3.5 mr-2" /> Bold
                 <span className="ml-auto text-[10px] text-muted-foreground">⌘B</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => editor.chain().focus().toggleItalic().run()}>
-                <Italic className="h-3.5 w-3.5 mr-2" />
-                Italic
+                <Italic className="h-3.5 w-3.5 mr-2" /> Italic
                 <span className="ml-auto text-[10px] text-muted-foreground">⌘I</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => editor.chain().focus().toggleUnderline().run()}>
-                <UnderlineIcon className="h-3.5 w-3.5 mr-2" />
-                Underline
+                <UnderlineIcon className="h-3.5 w-3.5 mr-2" /> Underline
                 <span className="ml-auto text-[10px] text-muted-foreground">⌘U</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => editor.chain().focus().toggleStrike().run()}>
-                <Strikethrough className="h-3.5 w-3.5 mr-2" />
-                Strikethrough
+                <Strikethrough className="h-3.5 w-3.5 mr-2" /> Strikethrough
                 <span className="ml-auto text-[10px] text-muted-foreground">⌘S</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
