@@ -1,32 +1,26 @@
 
 
-## Plan: Show All Features, Gate on Click with Upgrade Prompt
+## Plan: Refine My Work Section
 
-**Goal**: All features (Finance, Splits, Invite Members, Permissions) are always visible in the UI. Free/Rising users who click them get an upgrade dialog instead of the feature content.
+### Current State
+- **Work tab**: Uses plain `ItemEditor` (HTML input) for task creation. Shows tasks assigned to user across team artists. Already auto-assigns to user and supports no-artist tasks.
+- **Notes tab**: Desktop shows split panel (240px sidebar + detail). Mobile already uses two-step (list → detail). TipTap is already used for note editing. Sharing is already implemented.
 
-### Changes
+### Changes Needed
 
-**1. `src/pages/ArtistDetail.tsx`**
-- Always include Finance in `actionButtons` (remove `canUseFinance` conditional on line 147)
-- Always include "splits" in `tabItems` (remove `canUseSplits` conditional on line 155)
-- Add `upgradeOpen` + `upgradeFeature` state
-- Intercept clicks on Finance and Splits when user lacks access — open UpgradeDialog instead of switching view
-- Render one `<UpgradeDialog>` at bottom of component
+**1. Notes: Convert to two-step flow on all screen sizes**
+- `src/components/notes/NotesPanel.tsx`
+- Remove the desktop split-panel layout. Always show either the full-width list view OR the full-width note detail (same pattern currently used on mobile).
+- List view: full-width cards with auto-generated preview (strip HTML, show first ~80 chars), timestamp, pinned indicator, share icon.
+- Clicking a note navigates to the detail view with back button, title, TipTap editor, toolbar, pin/share/delete actions.
+- New note button creates a note and immediately opens the detail view.
 
-**2. `src/components/artist/SplitsTab.tsx`**
-- Remove the internal `useTeamPlan` gate (lines 24-42) that shows an inline upgrade prompt. Parent now handles gating, so this component only renders for paid users.
+**2. Work tab: Add TipTap to task items for rich descriptions**
+- Keep the existing `ItemEditor` for the task title input (it handles @, $, date triggers well as a single-line input).
+- Add an expandable TipTap-powered description/body area when a task row is clicked or expanded, following the pattern from the artist Work tab (`TasksTab.tsx`).
+- This allows tasks to have rich-text notes/descriptions while keeping the quick-add flow intact.
 
-**3. `src/components/artist/FinanceTab.tsx`**
-- Remove the internal `useTeamPlan` gate (lines 50-73). Same reasoning — parent intercepts the click.
-
-**4. `src/pages/Overview.tsx`**
-- On the company Finance tab click (line 440), intercept if `!limits.canUseFinance` and show UpgradeDialog instead of navigating to the finance tab content.
-
-**5. `src/components/settings/InviteMemberDialog.tsx`**
-- Already uses click-intercept pattern. No change needed.
-
-### UX Flow
-1. Free user sees Finance button, Splits tab, etc. — identical to a paid user
-2. Clicking a gated feature opens the UpgradeDialog: "Finance tools are available on the Icon plan"
-3. Paid users experience zero change
+**3. Files to modify**
+- `src/components/notes/NotesPanel.tsx` — Remove split-panel, unify to two-step list→detail flow for all screen sizes.
+- `src/pages/MyWork.tsx` — Add expandable task detail with TipTap description editor. Minor layout adjustments for the new notes flow (remove conditional max-width since notes are now full-step).
 
